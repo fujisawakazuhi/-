@@ -7,36 +7,51 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Cpath d=%22M50 4 L90 18 V52 C90 76 72 90 50 97 C28 90 10 76 10 52 V18 Z%22 fill=%22%2316635f%22/%3E%3Cpath d=%22M30 50 L44 64 L72 35%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%2211%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
 <style>
   :root{
-    --ink:#1c2530; --ink-soft:#66707a;
-    --paper:#f5f6f7; --card:#fff; --line:#e2e5e8;
+    --bg:#eef1f2; --ink:#17222c; --ink-soft:#63707b;
+    --paper:#eef1f2; --card:#fff; --line:#e2e7e9;
     --red:#c4321f; --red-soft:#fbeae7;
-    --teal:#16635f; --teal-soft:#e4f0ef;
-    --amber:#9a6a14; --amber-soft:#faf1dc;
-    --gray-soft:#eef0f1;
+    --teal:#0f6660; --teal-2:#17a294; --teal-soft:#e2f1ef;
+    --gray-soft:#e9edee;
+    --shadow:0 1px 2px rgba(15,40,38,.05),0 16px 40px -20px rgba(15,60,55,.22);
     --mono:ui-monospace,Consolas,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
   body{
     font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
-    background:var(--paper);color:var(--ink);line-height:1.6;padding-bottom:70px;
+    background:var(--bg);color:var(--ink);line-height:1.6;padding-bottom:70px;
   }
-  .wrap{max-width:980px;margin:0 auto;padding:0 22px}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 22px}
 
-  header{background:var(--card);border-bottom:1px solid var(--line);padding:30px 0 26px}
-  header .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-  h1{font-size:1.9rem;font-weight:800;letter-spacing:.03em;line-height:1.2}
-  h1 small{display:block;font-size:.78rem;font-weight:500;color:var(--ink-soft);letter-spacing:.1em;margin-top:4px}
+  header{
+    background:linear-gradient(135deg,#0b2f2c 0%,#0f4c47 55%,#15655d 100%);
+    color:#fff;padding:26px 0 34px;position:relative;overflow:hidden;
+  }
+  header::before{
+    content:"";position:absolute;width:420px;height:420px;border-radius:50%;
+    right:-130px;top:-190px;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%);
+  }
+  header .wrap{position:relative}
+  .back{
+    display:inline-block;font-size:.8rem;font-weight:600;text-decoration:none;
+    color:rgba(255,255,255,.75);margin-bottom:14px;transition:color .15s;
+  }
+  .back:hover{color:#fff}
+  .head-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  h1{font-size:1.9rem;font-weight:800;letter-spacing:.03em;line-height:1.2;color:#fff}
+  h1 small{display:block;font-size:.78rem;font-weight:500;color:rgba(255,255,255,.72);letter-spacing:.1em;margin-top:4px}
   .local-badge{
-    margin-left:auto;font-weight:700;font-size:.92rem;color:var(--teal);
-    border:2px solid var(--teal);background:var(--teal-soft);
-    border-radius:10px;padding:8px 18px;white-space:nowrap;
-    text-align:center;
+    margin-left:auto;font-weight:700;font-size:.92rem;color:#fff;
+    border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);
+    border-radius:12px;padding:9px 18px;white-space:nowrap;text-align:center;
+    backdrop-filter:blur(6px);
   }
   .local-badge .main::before{content:"✓ ";font-size:1rem}
-  .local-badge .sub{display:block;font-size:.68rem;font-weight:500;margin-top:2px}
+  .local-badge .sub{display:block;font-size:.68rem;font-weight:500;margin-top:2px;color:rgba(255,255,255,.78)}
 
   .formats{
-    margin-top:24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin-top:26px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   }
   .formats .f-label{
     font-size:.8rem;font-weight:700;color:var(--ink-soft);letter-spacing:.06em;margin-right:4px;
@@ -44,85 +59,105 @@
   .formats .chip{
     background:var(--card);border:1px solid var(--line);border-radius:999px;
     padding:5px 16px;font-size:.84rem;font-weight:600;
+    box-shadow:0 1px 2px rgba(15,40,38,.04);
   }
   .formats .chip small{font-weight:500;color:var(--ink-soft)}
   .dropzone{
-    margin-top:14px;background:var(--card);
-    border:2px dashed #b9c0c6;border-radius:14px;
-    padding:38px 24px 32px;text-align:center;cursor:pointer;
-    transition:border-color .15s,background .15s;
+    margin-top:16px;background:var(--card);
+    border:2px dashed #b7c6c3;border-radius:22px;
+    padding:44px 24px 36px;text-align:center;cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:border-color .15s,background .15s,box-shadow .15s;
   }
-  .dropzone:hover,.dropzone.dragover{border-color:var(--ink);background:#fcfdfd}
-  .dropzone .big{font-size:1.1rem;font-weight:700}
+  .dropzone:hover,.dropzone.dragover{
+    border-color:var(--teal-2);background:#fbfdfd;
+    box-shadow:0 0 0 5px rgba(23,162,148,.12),var(--shadow);
+  }
+  .dz-icon{margin-bottom:10px}
+  .dz-icon svg{width:52px;height:52px}
+  .dropzone .big{font-size:1.12rem;font-weight:700}
   .dropzone .hint{font-size:.84rem;color:var(--ink-soft);margin-top:8px}
   .dropzone .hint b{color:var(--ink)}
-  .dz-actions{margin-top:16px}
+  .dz-actions{margin-top:18px}
   button{
-    font-family:inherit;font-size:.88rem;font-weight:600;border-radius:8px;
+    font-family:inherit;font-size:.88rem;font-weight:600;border-radius:999px;
     padding:10px 26px;cursor:pointer;border:1px solid var(--line);
-    background:var(--card);color:var(--ink);transition:background .12s;
+    background:var(--card);color:var(--ink);
+    transition:background .12s,transform .12s,box-shadow .12s;
   }
-  button:hover{background:#f4f6f6}
-  button.primary{background:var(--ink);border-color:var(--ink);color:#fff}
-  button.primary:hover{background:#2c3845}
-  button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  button:hover{background:#f2f6f5}
+  button.primary{
+    background:linear-gradient(135deg,var(--teal-2),var(--teal));
+    border:none;color:#fff;font-weight:700;padding:12px 32px;
+    box-shadow:0 8px 20px -8px rgba(15,102,96,.55);
+  }
+  button.primary:hover{transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(15,102,96,.6)}
+  button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 
-  .progress{margin-top:14px;display:none;align-items:center;gap:12px;font-size:.82rem;color:var(--ink-soft)}
+  .progress{margin-top:16px;display:none;align-items:center;gap:12px;font-size:.82rem;color:var(--ink-soft)}
   .progress.active{display:flex}
-  .bar{flex:1;height:6px;border-radius:3px;background:var(--gray-soft);overflow:hidden}
-  .bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .15s}
+  .bar{flex:1;height:8px;border-radius:4px;background:var(--gray-soft);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--teal-2),var(--teal));transition:width .15s}
 
-  .summary{margin-top:24px;display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .summary.show{display:grid;grid-template-columns:repeat(3,1fr)}
-  .stat{padding:18px 22px 14px;border-left:1px solid var(--line)}
-  .stat:first-child{border-left:none}
-  .stat .n{font-size:2rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+  .summary{margin-top:26px;display:none}
+  .summary.show{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:20px 22px 16px;box-shadow:0 1px 2px rgba(15,40,38,.04);
+  }
+  .stat .n{font-size:2.1rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
   .stat .l{font-size:.78rem;color:var(--ink-soft)}
-  .stat.conf{background:var(--red-soft)}
+  .stat.conf{background:linear-gradient(135deg,#fdf1ee,var(--red-soft));border-color:#f0cfc8}
   .stat.conf .n{color:var(--red)}
   .stat.conf .l{color:var(--red);font-weight:700}
   .stat.unk .n{color:var(--red)}
   .stat.unk .l{color:var(--red)}
-  .stat.zero{background:var(--teal-soft)}
+  .stat.zero{background:linear-gradient(135deg,#e9f5f3,var(--teal-soft));border-color:#cde4e1}
   .stat.zero .n{color:var(--teal)}
   .stat.zero .l{color:var(--teal);font-weight:700}
   .stat.conf.zero .n::after{content:" 😊";font-size:1.5rem;vertical-align:middle}
 
   .rule{
-    margin-top:14px;display:none;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-top:16px;display:none;align-items:center;gap:10px;flex-wrap:wrap;
     font-size:.8rem;color:var(--ink-soft);
   }
   .rule.show{display:flex}
   .rule input{
     font-family:inherit;font-size:.8rem;padding:5px 10px;
-    border:1px solid var(--line);border-radius:6px;width:240px;color:var(--ink);
+    border:1px solid var(--line);border-radius:8px;width:240px;color:var(--ink);
   }
   .rule .spacer{flex:1}
-  .rule button{padding:6px 16px;font-size:.78rem}
+  .rule button{padding:6px 18px;font-size:.78rem}
 
-  .table-card{margin-top:12px;display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:auto}
+  .table-card{
+    margin-top:12px;display:none;background:var(--card);
+    border:1px solid var(--line);border-radius:20px;overflow:auto;
+    box-shadow:var(--shadow);
+  }
   .table-card.show{display:block}
   table{width:100%;border-collapse:collapse;font-size:.86rem}
   thead th{
-    text-align:left;font-size:.72rem;font-weight:600;color:var(--ink-soft);
-    letter-spacing:.08em;padding:10px 14px;border-bottom:1px solid var(--line);
-    background:#fafbfb;position:sticky;top:0;white-space:nowrap;
+    text-align:left;font-size:.7rem;font-weight:700;color:var(--ink-soft);
+    letter-spacing:.1em;padding:12px 16px;border-bottom:1px solid var(--line);
+    background:#f7fafa;position:sticky;top:0;white-space:nowrap;
   }
-  tbody td{padding:11px 14px;border-bottom:1px solid #eff1f2;vertical-align:top}
+  tbody td{padding:12px 16px;border-bottom:1px solid #eef2f2;vertical-align:top}
   tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#f8fbfa}
   tbody tr.conf td{background:#fdf6f5}
+  tbody tr.conf:hover td{background:#fcf1ef}
   .fname{font-weight:600;word-break:break-all}
   .fpath{font-size:.74rem;color:var(--ink-soft);word-break:break-all}
   .ftype{white-space:nowrap;color:var(--ink-soft);font-size:.8rem}
-  .badge{display:inline-block;font-size:.8rem;font-weight:700;border-radius:6px;padding:3px 12px;white-space:nowrap}
-  .badge.conf{background:var(--red);color:#fff}
+  .badge{display:inline-block;font-size:.78rem;font-weight:700;border-radius:999px;padding:4px 14px;white-space:nowrap}
+  .badge.conf{background:var(--red);color:#fff;box-shadow:0 4px 10px -4px rgba(196,50,31,.5)}
   .badge.safe{background:var(--teal-soft);color:var(--teal)}
   .badge.unk{background:#fff;color:var(--red);border:1.5px solid var(--red)}
   .lname{font-weight:600}
   .meta{font-size:.74rem;color:var(--ink-soft)}
   td.num{white-space:nowrap;color:var(--ink-soft);font-size:.78rem}
 
-  footer{margin-top:28px;font-size:.78rem;color:var(--ink-soft);line-height:1.7}
+  footer{margin-top:32px;font-size:.78rem;color:var(--ink-soft);line-height:1.7}
   footer p{margin-top:8px}
   footer b{color:var(--ink)}
 </style>
@@ -131,8 +166,11 @@
 
 <header>
   <div class="wrap">
-    <h1>秘密度一括チェック<small>ファイルの外部連携前の秘密度チェックツール</small></h1>
-    <span class="local-badge"><span class="main">完全ローカル処理</span><span class="sub">ネットワーク接続なしでもチェック可能</span></span>
+    <a class="back" href="../">← ツール集にもどる</a>
+    <div class="head-row">
+      <h1>秘密度一括チェック<small>ファイルの外部連携前の秘密度チェックツール</small></h1>
+      <span class="local-badge"><span class="main">完全ローカル処理</span><span class="sub">ネットワーク接続なしでもチェック可能</span></span>
+    </div>
   </div>
 </header>
 
@@ -148,6 +186,12 @@
   </div>
 
   <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="ファイルを選択">
+    <div class="dz-icon" aria-hidden="true">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <path d="M20 44 h-4 a11 11 0 0 1 -1.5-21.9 A14 14 0 0 1 41.6 17.4 A10 10 0 0 1 48 44 h-4" stroke="#17a294" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M32 30 v22 M24 40 l8-9 8 9" stroke="#0f6660" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
     <div class="big">ここにファイルをドラッグ＆ドロップ</div>
     <div class="hint">フォルダごとのドラッグもOK ・ 一度にチェックできるのは <b>最大500ファイル</b> まで</div>
     <div class="dz-actions">
