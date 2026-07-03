@@ -157,7 +157,26 @@
   .meta{font-size:.74rem;color:var(--ink-soft)}
   td.num{white-space:nowrap;color:var(--ink-soft);font-size:.78rem}
 
-  footer{margin-top:32px;font-size:.78rem;color:var(--ink-soft);line-height:1.7}
+  .trust{
+    margin-top:34px;background:var(--card);border:1px solid var(--line);
+    border-radius:20px;padding:28px 28px 24px;box-shadow:var(--shadow);
+  }
+  .trust h2{font-size:1.15rem;font-weight:800;letter-spacing:.02em}
+  .trust h2::before{content:"🔒 "}
+  .trust-lead{margin-top:10px;font-size:.86rem;color:var(--ink-soft);line-height:1.8}
+  .trust-lead b{color:var(--ink)}
+  .trust-grid{
+    margin-top:16px;display:grid;gap:12px;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  }
+  .t-item{
+    background:#f5faf9;border:1px solid #d9eae7;border-radius:14px;
+    padding:16px 18px;font-size:.8rem;color:var(--ink-soft);line-height:1.7;
+  }
+  .t-item b{display:block;color:var(--teal);font-size:.88rem;margin-bottom:6px}
+  .trust-note{margin-top:14px;font-size:.78rem;color:var(--ink-soft)}
+
+  footer{margin-top:26px;font-size:.78rem;color:var(--ink-soft);line-height:1.7}
   footer p{margin-top:8px}
   footer b{color:var(--ink)}
 </style>
@@ -169,7 +188,7 @@
     <a class="back" href="../">← ツール集にもどる</a>
     <div class="head-row">
       <h1>秘密度一括チェック<small>ファイルの外部連携前の秘密度チェックツール</small></h1>
-      <span class="local-badge"><span class="main">完全ローカル処理</span><span class="sub">ネットワーク接続なしでもチェック可能</span></span>
+      <span class="local-badge"><span class="main">ファイルは送信されません</span><span class="sub">通信を切っても使えます（完全ローカル処理）</span></span>
     </div>
   </div>
 </header>
@@ -233,10 +252,33 @@
     </table>
   </div>
 
+  <section class="trust">
+    <h2>選んだファイルは、このパソコンの外に出ません</h2>
+    <p class="trust-lead">
+      インターネット上にあるのは「このページ（道具そのもの）」だけです。ページを開いた時点で、チェックに必要なプログラム一式がお使いのブラウザに届き、
+      それ以降の処理はすべて手元のパソコンの中だけで完結します。ダウンロードした電卓アプリに入力した数字が作者へ送られないのと同じで、
+      <b>ファイルをどこかへ送信する機能は、そもそもこのツールに存在しません</b>。
+    </p>
+    <p class="trust-lead">これは「信じてください」という話ではなく、次の3つの方法で<b>どなたでもその場で確かめられます</b>。</p>
+    <div class="trust-grid">
+      <div class="t-item">
+        <b>① 通信を切っても動く</b>
+        <span>ページを開いたあとWi-Fiを切断（機内モードに）してからチェックしてみてください。全機能がそのまま動きます。ファイルを送信する作りなら、動くはずがありません。</span>
+      </div>
+      <div class="t-item">
+        <b>② 通信ゼロを自分の目で見られる</b>
+        <span>キーボードのF12 →「ネットワーク」タブを開いたままファイルをチェックしてみてください。通信が1件も発生しないことがリアルタイムで確認できます。</span>
+      </div>
+      <div class="t-item">
+        <b>③ 中身がすべて公開されている</b>
+        <span>このページのプログラム全文は公開されており（右クリック→「ページのソースを表示」）、送信用のコードが存在しないことを、社内のシステム担当者など第三者がいつでも検証できます。</span>
+      </div>
+    </div>
+    <p class="trust-note">チェック結果もこの画面に表示されるだけで、どこにも保存・送信されません。タブを閉じればすべて消えます。</p>
+  </section>
+
   <footer>
-    <p><b>処理方法：</b>選択したファイルはお使いのパソコンのブラウザ内のメモリ上でのみ読み取られます。本ツールはHTMLファイル1つで完結しており、サーバーへの送信機能・外部との通信機能を一切持ちません（通信用のプログラムコード自体が存在しません）。インターネットを切断した状態でも全機能が動作することで、このことを確認できます。</p>
     <p><b>判定方法：</b>Microsoft Purview の秘密度ラベルは、ファイル内部のメタデータ領域に「MSIP_Label」というプロパティとして記録されています。本ツールはこの領域を直接読み取り、ラベル名に「レベル2」「レベル3」を含むものを「秘密度あり」と判定します。暗号化保護されたファイルは、ラベル名が読み取れない場合でも外部の人間は開けないため「秘密度あり」として扱います。旧形式（.doc / .xls / .ppt）等でラベル情報を確認しきれない場合は「手動確認要」と表示し、推測で「秘密度なし」と判定することはありません。ラベルの付け替えにより旧ラベルの情報がファイル内に残っている場合は、設定日時が最も新しいラベルを現在の秘密度として判定します（日時を確認できない場合は安全側として全ラベルで判定します）。</p>
-    <p><b>安心してお使いいただける理由：</b>ファイルの内容・ファイル名・チェック結果はこのパソコンの外に一切出ません。クラウドへのアップロードや外部ツールへの連携も行わないため、秘密度の高いファイルを含めてチェックしても情報漏洩のリスクはありません。</p>
     <p style="margin-top:14px;text-align:right">バージョン 1.3（2026年7月3日更新）／ ツール作成日：2026年6月12日</p>
   </footer>
 
