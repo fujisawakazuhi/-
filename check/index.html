@@ -235,9 +235,9 @@
 
   <footer>
     <p><b>処理方法：</b>選択したファイルはお使いのパソコンのブラウザ内のメモリ上でのみ読み取られます。本ツールはHTMLファイル1つで完結しており、サーバーへの送信機能・外部との通信機能を一切持ちません（通信用のプログラムコード自体が存在しません）。インターネットを切断した状態でも全機能が動作することで、このことを確認できます。</p>
-    <p><b>判定方法：</b>Microsoft Purview の秘密度ラベルは、ファイル内部のメタデータ領域に「MSIP_Label」というプロパティとして記録されています。本ツールはこの領域を直接読み取り、ラベル名に「レベル2」「レベル3」を含むものを「秘密度あり」と判定します。暗号化保護されたファイルは、ラベル名が読み取れない場合でも外部の人間は開けないため「秘密度あり」として扱います。旧形式（.doc / .xls / .ppt）等でラベル情報を確認しきれない場合は「手動確認要」と表示し、推測で「秘密度なし」と判定することはありません。</p>
+    <p><b>判定方法：</b>Microsoft Purview の秘密度ラベルは、ファイル内部のメタデータ領域に「MSIP_Label」というプロパティとして記録されています。本ツールはこの領域を直接読み取り、ラベル名に「レベル2」「レベル3」を含むものを「秘密度あり」と判定します。暗号化保護されたファイルは、ラベル名が読み取れない場合でも外部の人間は開けないため「秘密度あり」として扱います。旧形式（.doc / .xls / .ppt）等でラベル情報を確認しきれない場合は「手動確認要」と表示し、推測で「秘密度なし」と判定することはありません。ラベルの付け替えにより旧ラベルの情報がファイル内に残っている場合は、設定日時が最も新しいラベルを現在の秘密度として判定します（日時を確認できない場合は安全側として全ラベルで判定します）。</p>
     <p><b>安心してお使いいただける理由：</b>ファイルの内容・ファイル名・チェック結果はこのパソコンの外に一切出ません。クラウドへのアップロードや外部ツールへの連携も行わないため、秘密度の高いファイルを含めてチェックしても情報漏洩のリスクはありません。</p>
-    <p style="margin-top:14px;text-align:right">バージョン 1.2 ／ ツール作成日：2026年6月12日</p>
+    <p style="margin-top:14px;text-align:right">バージョン 1.3（2026年7月3日更新）／ ツール作成日：2026年6月12日</p>
   </footer>
 
 </main>
@@ -649,12 +649,30 @@ async function analyzeBuffer(ext, buffer){
 
 const CONF_KEYWORDS=["レベル2","レベル3"]; // このラベル名を含む場合に「秘密度あり」
 function getKeywords(){ return CONF_KEYWORDS; }
+
+/* ラベルを付け替えた場合、旧ラベルの情報がメタデータに残留することがある。
+   複数のラベルが見つかったときは SetDate が最も新しいものを現在のラベルとみなす
+   （MIP SDK と同じ解決ルール）。日時が読めない・最新が複数あるときは
+   従来どおり全ラベルで判定する（安全側）。 */
+function pickActive(labels){
+  const named=labels.filter(l=>l.name);
+  if(named.length<=1) return {active:named[0]||null, superseded:[]};
+  const t=l=>{const d=Date.parse(l.setDate); return isNaN(d)?null:d;};
+  if(named.some(l=>t(l)===null)) return {active:null, superseded:[]};
+  const max=Math.max(...named.map(t));
+  const newest=named.filter(l=>t(l)===max);
+  if(newest.length!==1) return {active:null, superseded:[]};
+  return {active:newest[0], superseded:named.filter(l=>t(l)<max)};
+}
+
 function classify(rec, keywords){
   if(rec.raw==="unknown") return "unknown";
   if(rec.raw==="unlabeled") return "safe";
   const named=rec.labels.filter(l=>l.name);
   if(!named.length) return rec.protected ? "conf" : "unknown"; // 保護ファイルは外部不可＝秘密度あり
-  const hit = named.some(l => keywords.some(k => l.name.toLowerCase().includes(k.toLowerCase())));
+  const pick=pickActive(rec.labels);
+  const judged=pick.active?[pick.active]:named;
+  const hit = judged.some(l => keywords.some(k => l.name.toLowerCase().includes(k.toLowerCase())));
   if(hit) return "conf";
   return rec.protected ? "conf" : "safe"; // ラベル名がレベル2/3でなくても暗号化保護なら秘密度あり
 }
@@ -822,7 +840,7 @@ function render(){
   ["summary","rule","tableCard"].forEach(id=>$(id).classList.add("show"));
 
   $("tbody").innerHTML = rows.map((x,i)=>{
-    const r=x.r, lab=r.labels[0];
+    const r=x.r, pick=pickActive(r.labels), lab=pick.active||r.labels[0];
     const badgeCls = x.cls==="unknown"?"unk":x.cls;
     let labelCell;
     if(lab){
@@ -831,6 +849,9 @@ function render(){
       labelCell = r.raw==="unlabeled" ? `<span class="meta">ラベルなし</span>` : `<span class="meta">—</span>`;
     }
     let remark = r.note || "";
+    if(pick.superseded.length){
+      remark += (remark?"。":"") + "付け替え前の旧ラベル「" + pick.superseded.map(l=>l.name).join("」「") + "」の痕跡あり（最新のラベルで判定）";
+    }
     if(x.cls==="unknown" && !remark) remark = "ラベル名が記録されておらず区分を判定できません";
     if(x.cls==="unknown") remark += (remark?"。":"") + "ファイルを開いて秘密度を直接確認してください";
     return `<tr class="${x.cls==="conf"?"conf":""}">
