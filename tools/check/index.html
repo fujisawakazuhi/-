@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>秘密度一括チェック</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Cpath d=%22M50 4 L90 18 V52 C90 76 72 90 50 97 C28 90 10 76 10 52 V18 Z%22 fill=%22%2316635f%22/%3E%3Cpath d=%22M30 50 L44 64 L72 35%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%2211%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef1f2; --ink:#17222c; --ink-soft:#63707b;
+    --paper:#eef1f2; --card:#fff; --line:#e2e7e9;
+    --red:#c4321f; --red-soft:#fbeae7;
+    --teal:#0f6660; --teal-2:#17a294; --teal-soft:#e2f1ef;
+    --gray-soft:#e9edee;
+    --shadow:0 1px 2px rgba(15,40,38,.05),0 16px 40px -20px rgba(15,60,55,.22);
+    --mono:ui-monospace,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.6;padding-bottom:70px;
+  }
+  .wrap{max-width:1020px;margin:0 auto;padding:0 22px}
+
+  header{
+    background:linear-gradient(135deg,#0b2f2c 0%,#0f4c47 55%,#15655d 100%);
+    color:#fff;padding:26px 0 34px;position:relative;overflow:hidden;
+  }
+  header::before{
+    content:"";position:absolute;width:420px;height:420px;border-radius:50%;
+    right:-130px;top:-190px;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%);
+  }
+  header .wrap{position:relative}
+  .back{
+    display:inline-block;font-size:.8rem;font-weight:600;text-decoration:none;
+    color:rgba(255,255,255,.75);margin-bottom:14px;transition:color .15s;
+  }
+  .back:hover{color:#fff}
+  .head-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  h1{font-size:1.9rem;font-weight:800;letter-spacing:.03em;line-height:1.2;color:#fff}
+  h1 small{display:block;font-size:.78rem;font-weight:500;color:rgba(255,255,255,.72);letter-spacing:.1em;margin-top:4px}
+  .local-badge{
+    margin-left:auto;font-weight:700;font-size:.92rem;color:#fff;
+    border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);
+    border-radius:12px;padding:9px 18px;white-space:nowrap;text-align:center;
+    backdrop-filter:blur(6px);
+  }
+  .local-badge .main::before{content:"✓ ";font-size:1rem}
+  .local-badge .sub{display:block;font-size:.68rem;font-weight:500;margin-top:2px;color:rgba(255,255,255,.78)}
+
+  .formats{
+    margin-top:26px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .formats .f-label{
+    font-size:.8rem;font-weight:700;color:var(--ink-soft);letter-spacing:.06em;margin-right:4px;
+  }
+  .formats .chip{
+    background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:5px 16px;font-size:.84rem;font-weight:600;
+    box-shadow:0 1px 2px rgba(15,40,38,.04);
+  }
+  .formats .chip small{font-weight:500;color:var(--ink-soft)}
+  .dropzone{
+    margin-top:16px;background:var(--card);
+    border:2px dashed #b7c6c3;border-radius:22px;
+    padding:44px 24px 36px;text-align:center;cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:border-color .15s,background .15s,box-shadow .15s;
+  }
+  .dropzone:hover,.dropzone.dragover{
+    border-color:var(--teal-2);background:#fbfdfd;
+    box-shadow:0 0 0 5px rgba(23,162,148,.12),var(--shadow);
+  }
+  .dz-icon{margin-bottom:10px}
+  .dz-icon svg{width:52px;height:52px}
+  .dropzone .big{font-size:1.12rem;font-weight:700}
+  .dropzone .hint{font-size:.84rem;color:var(--ink-soft);margin-top:8px}
+  .dropzone .hint b{color:var(--ink)}
+  .dz-actions{margin-top:18px}
+  button{
+    font-family:inherit;font-size:.88rem;font-weight:600;border-radius:999px;
+    padding:10px 26px;cursor:pointer;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);
+    transition:background .12s,transform .12s,box-shadow .12s;
+  }
+  button:hover{background:#f2f6f5}
+  button.primary{
+    background:linear-gradient(135deg,var(--teal-2),var(--teal));
+    border:none;color:#fff;font-weight:700;padding:12px 32px;
+    box-shadow:0 8px 20px -8px rgba(15,102,96,.55);
+  }
+  button.primary:hover{transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(15,102,96,.6)}
+  button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  .progress{margin-top:16px;display:none;align-items:center;gap:12px;font-size:.82rem;color:var(--ink-soft)}
+  .progress.active{display:flex}
+  .bar{flex:1;height:8px;border-radius:4px;background:var(--gray-soft);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--teal-2),var(--teal));transition:width .15s}
+
+  .summary{margin-top:26px;display:none}
+  .summary.show{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .stat{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:20px 22px 16px;box-shadow:0 1px 2px rgba(15,40,38,.04);
+  }
+  .stat .n{font-size:2.1rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:.78rem;color:var(--ink-soft)}
+  .stat.conf{background:linear-gradient(135deg,#fdf1ee,var(--red-soft));border-color:#f0cfc8}
+  .stat.conf .n{color:var(--red)}
+  .stat.conf .l{color:var(--red);font-weight:700}
+  .stat.unk .n{color:var(--red)}
+  .stat.unk .l{color:var(--red)}
+  .stat.zero{background:linear-gradient(135deg,#e9f5f3,var(--teal-soft));border-color:#cde4e1}
+  .stat.zero .n{color:var(--teal)}
+  .stat.zero .l{color:var(--teal);font-weight:700}
+  .stat.conf.zero .n::after{content:" 😊";font-size:1.5rem;vertical-align:middle}
+
+  .rule{
+    margin-top:16px;display:none;align-items:center;gap:10px;flex-wrap:wrap;
+    font-size:.8rem;color:var(--ink-soft);
+  }
+  .rule.show{display:flex}
+  .rule input{
+    font-family:inherit;font-size:.8rem;padding:5px 10px;
+    border:1px solid var(--line);border-radius:8px;width:240px;color:var(--ink);
+  }
+  .rule .spacer{flex:1}
+  .rule button{padding:6px 18px;font-size:.78rem}
+
+  .table-card{
+    margin-top:12px;display:none;background:var(--card);
+    border:1px solid var(--line);border-radius:20px;overflow:auto;
+    box-shadow:var(--shadow);
+  }
+  .table-card.show{display:block}
+  table{width:100%;border-collapse:collapse;font-size:.86rem}
+  thead th{
+    text-align:left;font-size:.7rem;font-weight:700;color:var(--ink-soft);
+    letter-spacing:.1em;padding:12px 16px;border-bottom:1px solid var(--line);
+    background:#f7fafa;position:sticky;top:0;white-space:nowrap;
+  }
+  tbody td{padding:12px 16px;border-bottom:1px solid #eef2f2;vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#f8fbfa}
+  tbody tr.conf td{background:#fdf6f5}
+  tbody tr.conf:hover td{background:#fcf1ef}
+  .fname{font-weight:600;word-break:break-all}
+  .fpath{font-size:.74rem;color:var(--ink-soft);word-break:break-all}
+  .ftype{white-space:nowrap;color:var(--ink-soft);font-size:.8rem}
+  .badge{display:inline-block;font-size:.78rem;font-weight:700;border-radius:999px;padding:4px 14px;white-space:nowrap}
+  .badge.conf{background:var(--red);color:#fff;box-shadow:0 4px 10px -4px rgba(196,50,31,.5)}
+  .badge.safe{background:var(--teal-soft);color:var(--teal)}
+  .badge.unk{background:#fff;color:var(--red);border:1.5px solid var(--red)}
+  .lname{font-weight:600}
+  .meta{font-size:.74rem;color:var(--ink-soft)}
+  td.num{white-space:nowrap;color:var(--ink-soft);font-size:.78rem}
+
+  footer{margin-top:32px;font-size:.78rem;color:var(--ink-soft);line-height:1.7}
+  footer p{margin-top:8px}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="back" href="../">← ツール集にもどる</a>
+    <div class="head-row">
+      <h1>秘密度一括チェック<small>ファイルの外部連携前の秘密度チェックツール</small></h1>
+      <span class="local-badge"><span class="main">ファイルは送信されません</span><span class="sub">通信を切っても使えます（完全ローカル処理）</span></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="formats">
+    <span class="f-label">対応形式</span>
+    <span class="chip">Word</span>
+    <span class="chip">Excel</span>
+    <span class="chip">PowerPoint</span>
+    <span class="chip">PDF</span>
+    <span class="chip">ZIP <small>（中のファイルも自動チェック）</small></span>
+  </div>
+
+  <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="ファイルを選択">
+    <div class="dz-icon" aria-hidden="true">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <path d="M20 44 h-4 a11 11 0 0 1 -1.5-21.9 A14 14 0 0 1 41.6 17.4 A10 10 0 0 1 48 44 h-4" stroke="#17a294" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M32 30 v22 M24 40 l8-9 8 9" stroke="#0f6660" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="big">ここにファイルをドラッグ＆ドロップ</div>
+    <div class="hint">フォルダごとのドラッグもOK ・ 一度にチェックできるのは <b>最大500ファイル</b> まで</div>
+    <div class="dz-actions">
+      <button class="primary" id="btnFiles" type="button">ファイルを選択</button>
+    </div>
+    <input type="file" id="fileInput" multiple hidden
+      accept=".doc,.docx,.docm,.dotx,.dotm,.xls,.xlsx,.xlsm,.xlsb,.xltx,.xltm,.ppt,.pptx,.pptm,.potx,.potm,.ppsx,.ppsm,.pdf,.zip">
+  </div>
+
+  <div class="progress" id="progress">
+    <span id="progText">処理中…</span>
+    <div class="bar"><i id="progBar"></i></div>
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">チェック対象</div></div>
+    <div class="stat conf" id="statConf"><div class="n" id="stConf">0</div><div class="l">秘密度あり</div></div>
+    <div class="stat unk" id="statUnk"><div class="n" id="stUnk">0</div><div class="l">手動確認要</div></div>
+  </div>
+
+  <div class="rule" id="rule">
+    <span class="spacer"></span>
+    <button id="btnClear" type="button">クリア</button>
+  </div>
+
+  <div class="table-card" id="tableCard">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:30px">#</th>
+          <th>ファイル名</th>
+          <th>種類</th>
+          <th>判定</th>
+          <th>ラベル</th>
+          <th>備考</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    <p><b>処理方法：</b>選択したファイルはお使いのパソコンのブラウザ内のメモリ上でのみ読み取られます。本ツールはHTMLファイル1つで完結しており、サーバーへの送信機能・外部との通信機能を一切持ちません（通信用のプログラムコード自体が存在しません）。インターネットを切断した状態でも全機能が動作することで、このことを確認できます。</p>
+    <p><b>判定方法：</b>Microsoft Purview の秘密度ラベルは、ファイル内部のメタデータ領域に「MSIP_Label」というプロパティとして記録されています。本ツールはこの領域を直接読み取り、ラベル名に「レベル2」「レベル3」を含むものを「秘密度あり」と判定します。暗号化保護されたファイルは、ラベル名が読み取れない場合でも外部の人間は開けないため「秘密度あり」として扱います。旧形式（.doc / .xls / .ppt）等でラベル情報を確認しきれない場合は「手動確認要」と表示し、推測で「秘密度なし」と判定することはありません。ラベルの付け替えにより旧ラベルの情報がファイル内に残っている場合は、設定日時が最も新しいラベルを現在の秘密度として判定します（日時を確認できない場合は安全側として全ラベルで判定します）。</p>
+    <p><b>安心してお使いいただける理由：</b>ファイルの内容・ファイル名・チェック結果はこのパソコンの外に一切出ません。クラウドへのアップロードや外部ツールへの連携も行わないため、秘密度の高いファイルを含めてチェックしても情報漏洩のリスクはありません。</p>
+    <p style="margin-top:14px;text-align:right">バージョン 1.3（2026年7月3日更新）／ ツール作成日：2026年6月12日</p>
+  </footer>
+
+</main>
+
+<script>
+"use strict";
+
+/* ===================== 定数 ===================== */
+
+const MAX_FILES = 500;
+const OFFICE_ZIP_EXT = new Set(["docx","docm","dotx","dotm","xlsx","xlsm","xltx","xltm","xlsb","pptx","pptm","potx","potm","ppsx","ppsm"]);
+const OFFICE_OLE_EXT = new Set(["doc","dot","xls","xlt","ppt","pot","pps"]);
+const TYPE_LABELS = {
+  doc:"Word（旧）", dot:"Word（旧）", docx:"Word", docm:"Word", dotx:"Word", dotm:"Word",
+  xls:"Excel（旧）", xlt:"Excel（旧）", xlsx:"Excel", xlsm:"Excel", xlsb:"Excel", xltx:"Excel", xltm:"Excel",
+  ppt:"PowerPoint（旧）", pot:"PowerPoint（旧）", pps:"PowerPoint（旧）",
+  pptx:"PowerPoint", pptm:"PowerPoint", potx:"PowerPoint", potm:"PowerPoint", ppsx:"PowerPoint", ppsm:"PowerPoint",
+  pdf:"PDF"
+};
+const GUID_RE = "[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}";
+
+function extOf(name){ const m=/\.([A-Za-z0-9]+)$/.exec(name); return m?m[1].toLowerCase():""; }
+function isTargetExt(ext){ return OFFICE_ZIP_EXT.has(ext)||OFFICE_OLE_EXT.has(ext)||ext==="pdf"; }
+
+/* ===================== バイナリユーティリティ ===================== */
+
+const td_utf8  = new TextDecoder("utf-8");
+const td_u16le = new TextDecoder("utf-16le");
+const td_u16be = new TextDecoder("utf-16be");
+let td_sjis = null;
+try{ td_sjis = new TextDecoder("shift_jis"); }catch(e){}
+
+function binStr(u8){
+  let s=""; const CH=0x8000;
+  for(let i=0;i<u8.length;i+=CH) s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i+CH,u8.length)));
+  return s;
+}
+function readU16(dv,o){ return dv.getUint16(o,true); }
+function readU32(dv,o){ return dv.getUint32(o,true); }
+async function inflateRaw(bytes){
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+/* ===================== 簡易ZIPリーダー ===================== */
+
+function zipListEntries(buffer){
+  const dv=new DataView(buffer), u8=new Uint8Array(buffer);
+  const maxScan=Math.min(buffer.byteLength,65557);
+  let eocd=-1;
+  for(let i=buffer.byteLength-22;i>=buffer.byteLength-maxScan&&i>=0;i--){
+    if(readU32(dv,i)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error("ZIP形式ではありません");
+  const count=readU16(dv,eocd+10), cdOff=readU32(dv,eocd+16);
+  const entries=[]; let p=cdOff;
+  for(let i=0;i<count;i++){
+    if(p+46>buffer.byteLength||readU32(dv,p)!==0x02014b50) break;
+    const flags=readU16(dv,p+8), method=readU16(dv,p+10);
+    const csize=readU32(dv,p+20), usize=readU32(dv,p+24);
+    const nameLen=readU16(dv,p+28), extraLen=readU16(dv,p+30), cmtLen=readU16(dv,p+32);
+    const lho=readU32(dv,p+42);
+    const nameBytes=u8.subarray(p+46,p+46+nameLen);
+    // bit11=UTF-8フラグ。無ければShift_JIS（日本語Windowsの既定）として復号を試みる
+    let name;
+    if(flags & 0x0800) name=td_utf8.decode(nameBytes);
+    else{
+      try{ name=new TextDecoder("utf-8",{fatal:true}).decode(nameBytes); }
+      catch(e){ name = td_sjis ? td_sjis.decode(nameBytes) : binStr(nameBytes); }
+    }
+    entries.push({name, method, csize, usize, lho, encrypted:!!(flags&1)});
+    p += 46+nameLen+extraLen+cmtLen;
+  }
+  return entries;
+}
+
+async function zipExtractEntry(buffer, entry){
+  const dv=new DataView(buffer), u8=new Uint8Array(buffer);
+  if(readU32(dv,entry.lho)!==0x04034b50) throw new Error("ZIPローカルヘッダ不正");
+  const nameLen=readU16(dv,entry.lho+26), extraLen=readU16(dv,entry.lho+28);
+  const start=entry.lho+30+nameLen+extraLen;
+  const comp=u8.subarray(start,start+entry.csize);
+  if(entry.method===0) return comp.slice();
+  if(entry.method===8) return await inflateRaw(comp);
+  throw new Error("未対応の圧縮方式");
+}
+
+/* ===================== Office（OOXML）解析 ===================== */
+
+function parseCustomXml(xmlText){
+  const labels={};
+  let doc; try{ doc=new DOMParser().parseFromString(xmlText,"application/xml"); }catch(e){ return labels; }
+  const re=new RegExp("^MSIP_Label_("+GUID_RE+")_(\\w+)$");
+  for(const prop of doc.getElementsByTagName("property")){
+    const m=re.exec(prop.getAttribute("name")||""); if(!m) continue;
+    const guid=m[1].toLowerCase();
+    (labels[guid]=labels[guid]||{})[m[2]]=(prop.textContent||"").trim();
+  }
+  return labels;
+}
+function parseLabelInfoXml(xmlText){
+  const out=[];
+  let doc; try{ doc=new DOMParser().parseFromString(xmlText,"application/xml"); }catch(e){ return out; }
+  for(const n of doc.getElementsByTagNameNS("*","label")){
+    if(n.getAttribute("removed")==="1"||n.getAttribute("enabled")==="0") continue;
+    out.push({guid:(n.getAttribute("id")||"").replace(/[{}]/g,"").toLowerCase(),
+      method:n.getAttribute("method")||"", setDate:n.getAttribute("setDate")||""});
+  }
+  return out;
+}
+
+async function analyzeOoxml(buffer){
+  let entries;
+  try{ entries = zipListEntries(buffer); }catch(e){ return null; }
+  const want={};
+  for(const en of entries){
+    const l=en.name.toLowerCase();
+    if(l==="docprops/custom.xml"||l==="docmetadata/labelinfo.xml") want[l]=en;
+  }
+  const found=[];
+  if(want["docprops/custom.xml"]){
+    const xml=td_utf8.decode(await zipExtractEntry(buffer,want["docprops/custom.xml"]));
+    for(const [guid,p] of Object.entries(parseCustomXml(xml))){
+      if(p.Enabled!==undefined&&String(p.Enabled).toLowerCase()==="false") continue;
+      found.push({guid,name:p.Name||"",setDate:p.SetDate||"",method:p.Method||""});
+    }
+  }
+  if(want["docmetadata/labelinfo.xml"]){
+    const xml=td_utf8.decode(await zipExtractEntry(buffer,want["docmetadata/labelinfo.xml"]));
+    for(const l of parseLabelInfoXml(xml)){
+      const dup=found.find(f=>f.guid===l.guid);
+      if(dup){ if(!dup.setDate)dup.setDate=l.setDate; if(!dup.method)dup.method=l.method; }
+      else found.push({guid:l.guid,name:"",setDate:l.setDate,method:l.method});
+    }
+  }
+  return { raw: found.length?"labeled":"unlabeled", labels:found };
+}
+
+/* ===================== PDF解析 ===================== */
+
+function decodePdfBytes(u8){
+  if(u8.length>=2&&u8[0]===0xfe&&u8[1]===0xff) return td_u16be.decode(u8.subarray(2));
+  if(u8.length>=2&&u8[0]===0xff&&u8[1]===0xfe) return td_u16le.decode(u8.subarray(2));
+  try{ return new TextDecoder("utf-8",{fatal:true}).decode(u8); }
+  catch(e){ return binStr(u8); }
+}
+function decodePdfLiteral(s){
+  const bytes=[];
+  for(let i=0;i<s.length;i++){
+    let c=s.charCodeAt(i);
+    if(c===0x5c&&i+1<s.length){
+      const n=s[i+1]; i++;
+      if(n==="n")bytes.push(10); else if(n==="r")bytes.push(13);
+      else if(n==="t")bytes.push(9); else if(n==="b")bytes.push(8); else if(n==="f")bytes.push(12);
+      else if(n>="0"&&n<="7"){
+        let oct=n,j=i+1,k=0;
+        while(j<s.length&&k<2&&s[j]>="0"&&s[j]<="7"){oct+=s[j];j++;k++;}
+        i=j-1; bytes.push(parseInt(oct,8)&0xff);
+      }else bytes.push(n.charCodeAt(0));
+    }else bytes.push(c&0xff);
+  }
+  return decodePdfBytes(new Uint8Array(bytes));
+}
+function hexToBytes(hex){
+  const c=hex.replace(/[^0-9A-Fa-f]/g,"");
+  const u8=new Uint8Array(c.length>>1);
+  for(let i=0;i<u8.length;i++) u8[i]=parseInt(c.substr(i*2,2),16);
+  return u8;
+}
+function analyzePdf(buffer){
+  const text=binStr(new Uint8Array(buffer));
+  if(!text.includes("MSIP_Label")) return {raw:"unlabeled",labels:[]};
+  const labels={};
+  const get=g=>(labels[g.toLowerCase()]=labels[g.toLowerCase()]||{guid:g.toLowerCase()});
+  let m;
+  const dictRe=new RegExp("MSIP_Label_("+GUID_RE+")_(Name|SetDate|Method|Enabled)\\s*(?:\\(((?:\\\\.|[^\\\\()])*)\\)|<([0-9A-Fa-f\\s]+)>)","g");
+  while((m=dictRe.exec(text))){
+    get(m[1])[m[2]] = m[3]!==undefined ? decodePdfLiteral(m[3]) : decodePdfBytes(hexToBytes(m[4]||""));
+  }
+  const xmpAttrRe=new RegExp("MSIP_Label_("+GUID_RE+")_(Name|SetDate|Method|Enabled)\\s*=\\s*\"([^\"]*)\"","g");
+  while((m=xmpAttrRe.exec(text))){ const r=get(m[1]); if(r[m[2]]===undefined)r[m[2]]=m[3]; }
+  const xmpElemRe=new RegExp("MSIP_Label_("+GUID_RE+")_(Name|SetDate|Method|Enabled)\\s*>([^<]*)<","g");
+  while((m=xmpElemRe.exec(text))){ const r=get(m[1]); if(r[m[2]]===undefined)r[m[2]]=m[3]; }
+  const found=Object.values(labels)
+    .filter(r=>!(r.Enabled!==undefined&&String(r.Enabled).toLowerCase()==="false"))
+    .map(r=>({guid:r.guid,name:r.Name||"",setDate:r.SetDate||"",method:r.Method||""}));
+  if(found.length) return {raw:"labeled",labels:found};
+  return {raw:"unknown",labels:[],note:"ラベルの痕跡を検出（ファイルを開いて確認してください）"};
+}
+
+/* ===================== 旧形式・保護ファイル走査 ===================== */
+
+function scanBinaryForMsip(buffer){
+  const u8=new Uint8Array(buffer);
+  const ascii=binStr(u8);
+  const reA=new RegExp("MSIP_Label_("+GUID_RE+")_Name");
+  let guid="", hit=false;
+  let m=reA.exec(ascii);
+  if(m){hit=true;guid=m[1].toLowerCase();}
+  else if(ascii.includes("MSIP_Label_")) hit=true;
+  if(!hit){
+    const u16=td_u16le.decode(u8.length%2?u8.subarray(0,u8.length-1):u8);
+    m=reA.exec(u16);
+    if(m){hit=true;guid=m[1].toLowerCase();}
+    else if(u16.includes("MSIP_Label_")) hit=true;
+  }
+  if(hit) return {raw:"labeled",labels:[{guid,name:"",setDate:"",method:""}],note:"ラベル名を読み取れませんでした"};
+  return {raw:"unknown",labels:[],note:"旧形式/保護ファイルのためラベル情報を確認できません"};
+}
+
+
+/* ===================== OLE複合ファイル（保護ファイル・旧形式）解析 ===================== */
+/* 暗号化保護されたOffice文書・旧形式(.doc等)は OLE/CFB 構造。
+   ラベルは \x05DocumentSummaryInformation のユーザー定義プロパティに平文で残る。 */
+
+function parseCfb(buffer){
+  const dv=new DataView(buffer), src=new Uint8Array(buffer);
+  if(buffer.byteLength<512 || readU32(dv,0)!==0xE011CFD0 || readU32(dv,4)!==0xE11AB1A1)
+    throw new Error("OLE形式ではありません");
+  const ssz=1<<readU16(dv,30), msz=1<<readU16(dv,32);
+  const dirStart=readU32(dv,48), miniCutoff=readU32(dv,56);
+  const miniFatStart=readU32(dv,60);
+  const difatStart=readU32(dv,68), numDifat=readU32(dv,72);
+  const FREESECT=0xFFFFFFFF, ENDOFCHAIN=0xFFFFFFFE;
+
+  const difat=[];
+  for(let i=0;i<109;i++){const v=readU32(dv,76+i*4); if(v!==FREESECT) difat.push(v);}
+  let ds=difatStart;
+  for(let i=0;i<numDifat && ds!==ENDOFCHAIN && ds!==FREESECT;i++){
+    const off=(ds+1)*ssz;
+    for(let j=0;j<(ssz/4)-1;j++){const v=readU32(dv,off+j*4); if(v!==FREESECT) difat.push(v);}
+    ds=readU32(dv,off+ssz-4);
+  }
+  const fat=new Uint32Array(difat.length*(ssz/4));
+  let k=0;
+  for(const sec of difat){
+    const off=(sec+1)*ssz;
+    for(let j=0;j<ssz/4;j++) fat[k++]=readU32(dv,off+j*4);
+  }
+  function readChain(start,len){
+    const secs=[]; let sc=start, guard=0;
+    while(sc!==ENDOFCHAIN && sc!==FREESECT && sc<fat.length && guard++<1000000){secs.push(sc);sc=fat[sc];}
+    const out=new Uint8Array(secs.length*ssz);
+    secs.forEach((sec,i)=>{
+      const off=(sec+1)*ssz;
+      out.set(src.subarray(off,Math.min(off+ssz,src.length)), i*ssz);
+    });
+    return len!==undefined?out.subarray(0,Math.min(len,out.length)):out;
+  }
+  const dirBytes=readChain(dirStart);
+  const entries=[];
+  for(let off=0;off+128<=dirBytes.length;off+=128){
+    const nameLen=dirBytes[off+64]|(dirBytes[off+65]<<8);
+    if(!nameLen||nameLen>64) continue;
+    const name=td_u16le.decode(dirBytes.subarray(off,off+nameLen-2));
+    const type=dirBytes[off+66];
+    const startSec=(dirBytes[off+116])|(dirBytes[off+117]<<8)|(dirBytes[off+118]<<16)|(dirBytes[off+119]<<24);
+    const size=(dirBytes[off+120])|(dirBytes[off+121]<<8)|(dirBytes[off+122]<<16)|(dirBytes[off+123]<<24);
+    entries.push({name,type,startSec:startSec>>>0,size:size>>>0});
+  }
+  const root=entries.find(e=>e.type===5);
+  const miniStream=root?readChain(root.startSec,root.size):new Uint8Array(0);
+  const miniFatBytes=readChain(miniFatStart);
+  function readStream(entry){
+    if(entry.size>=miniCutoff) return readChain(entry.startSec,entry.size);
+    const out=new Uint8Array(entry.size);
+    let sc=entry.startSec, pos=0, guard=0;
+    while(sc!==ENDOFCHAIN && sc!==FREESECT && pos<entry.size && guard++<1000000){
+      const cs=Math.min(msz,entry.size-pos);
+      out.set(miniStream.subarray(sc*msz,sc*msz+cs),pos);
+      pos+=cs;
+      const fo=sc*4;
+      sc=fo+4<=miniFatBytes.length ? ((miniFatBytes[fo])|(miniFatBytes[fo+1]<<8)|(miniFatBytes[fo+2]<<16)|(miniFatBytes[fo+3]<<24))>>>0 : ENDOFCHAIN;
+    }
+    return out;
+  }
+  return {entries, readStream};
+}
+
+/* ユーザー定義プロパティセット（FMTID D5CDD505-2E9C-101B-9397-08002B2CF9AE）の解析 */
+const USER_FMTID=[0x05,0xD5,0xCD,0xD5,0x9C,0x2E,0x1B,0x10,0x93,0x97,0x08,0x00,0x2B,0x2C,0xF9,0xAE];
+
+function parseUserDefinedProps(u8){
+  if(u8.length<28) return null;
+  const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
+  if(dv.getUint16(0,true)!==0xFFFE) return null;
+  const numSets=dv.getUint32(24,true);
+  let setOff=-1;
+  for(let i=0;i<numSets && 28+i*20+20<=u8.length;i++){
+    const base=28+i*20;
+    let match=true;
+    for(let j=0;j<16;j++) if(u8[base+j]!==USER_FMTID[j]){match=false;break;}
+    if(match){setOff=dv.getUint32(base+16,true);break;}
+  }
+  if(setOff<0||setOff+8>u8.length) return null;
+
+  const num=dv.getUint32(setOff+4,true);
+  const props=[];
+  for(let i=0;i<num;i++){
+    const b=setOff+8+i*8;
+    if(b+8>u8.length) break;
+    props.push({pid:dv.getUint32(b,true), o:setOff+dv.getUint32(b+4,true)});
+  }
+  let codepage=1252;
+  const cp=props.find(p=>p.pid===1);
+  if(cp&&cp.o+6<=u8.length&&dv.getUint16(cp.o,true)===0x0002) codepage=dv.getUint16(cp.o+4,true);
+
+  function readVal(o){
+    if(o+4>u8.length) return "";
+    const type=dv.getUint16(o,true);
+    if(type===0x1F){ // VT_LPWSTR
+      const len=dv.getUint32(o+4,true);
+      return td_u16le.decode(u8.subarray(o+8,Math.min(o+8+len*2,u8.length))).replace(/\0+$/,"");
+    }
+    if(type===0x1E){ // VT_LPSTR
+      const len=dv.getUint32(o+4,true);
+      let b=u8.subarray(o+8,Math.min(o+8+len,u8.length));
+      while(b.length&&b[b.length-1]===0) b=b.subarray(0,b.length-1);
+      if(codepage===932&&td_sjis) return td_sjis.decode(b);
+      try{return new TextDecoder("utf-8",{fatal:true}).decode(b);}catch(e){return binStr(b);}
+    }
+    if(type===0x0B) return dv.getUint16(o+4,true)?"true":"false"; // VT_BOOL
+    if(type===0x40){ // VT_FILETIME
+      const lo=dv.getUint32(o+4,true), hi=dv.getUint32(o+8,true);
+      const ms=(hi*4294967296+lo)/10000 - 11644473600000;
+      const d=new Date(ms); return isNaN(d)?"":d.toISOString();
+    }
+    return "";
+  }
+
+  // 辞書（pid 0）: プロパティID → 名前
+  const dict={};
+  const d=props.find(p=>p.pid===0);
+  if(d){
+    let p=d.o;
+    const n=dv.getUint32(p,true); p+=4;
+    for(let i=0;i<n && p+8<=u8.length;i++){
+      const pid=dv.getUint32(p,true), len=dv.getUint32(p+4,true); p+=8;
+      let name;
+      if(codepage===1200){
+        name=td_u16le.decode(u8.subarray(p,Math.min(p+len*2,u8.length))).replace(/\0+$/,"");
+        p+=(len*2+3)&~3;
+      }else{
+        let b=u8.subarray(p,Math.min(p+len,u8.length));
+        while(b.length&&b[b.length-1]===0) b=b.subarray(0,b.length-1);
+        name=(codepage===932&&td_sjis)?td_sjis.decode(b):binStr(b);
+        p+=len;
+      }
+      dict[pid]=name;
+    }
+  }
+  const out={};
+  for(const pr of props){
+    if(pr.pid<2) continue;
+    const name=dict[pr.pid];
+    if(name) out[name]=readVal(pr.o);
+  }
+  return out;
+}
+
+const ENC_HINTS=["encryptedpackage","encryptioninfo","drmcontent","drmencrypted","\u0006dataspaces"];
+
+function analyzeOle(buffer){
+  let cfb;
+  try{ cfb=parseCfb(buffer); }catch(e){ return null; }
+  const isProtected=cfb.entries.some(en=>ENC_HINTS.some(h=>en.name.toLowerCase().includes(h)));
+  const dsi=cfb.entries.find(en=>en.type===2 && en.name.toLowerCase().includes("documentsummaryinformation"));
+  let propMap=null;
+  if(dsi){
+    try{ propMap=parseUserDefinedProps(cfb.readStream(dsi)); }catch(e){ propMap=null; }
+  }
+  const found=[];
+  if(propMap){
+    const re=new RegExp("^MSIP_Label_("+GUID_RE+")_(\\w+)$");
+    const byGuid={};
+    for(const [name,val] of Object.entries(propMap)){
+      const m=re.exec(name); if(!m) continue;
+      (byGuid[m[1].toLowerCase()]=byGuid[m[1].toLowerCase()]||{})[m[2]]=val;
+    }
+    for(const [guid,pr] of Object.entries(byGuid)){
+      if(pr.Enabled!==undefined&&String(pr.Enabled).toLowerCase()==="false") continue;
+      found.push({guid,name:pr.Name||"",setDate:pr.SetDate||"",method:pr.Method||""});
+    }
+  }
+  const note=isProtected?"暗号化保護あり":"";
+  if(found.length) return {raw:"labeled",labels:found,note,protected:isProtected};
+  if(propMap!==null) return {raw:"unlabeled",labels:[],note,protected:isProtected};
+  // プロパティが読めなかった → バイナリ走査にフォールバック
+  const sc=scanBinaryForMsip(buffer);
+  sc.protected=isProtected;
+  if(isProtected) sc.note=(sc.note?sc.note+"・":"")+"暗号化保護あり";
+  return sc;
+}
+
+/* ===================== バッファ解析の振り分け ===================== */
+
+async function analyzeBuffer(ext, buffer){
+  if(ext==="pdf") return analyzePdf(buffer);
+  if(OFFICE_ZIP_EXT.has(ext)){
+    const r=await analyzeOoxml(buffer);
+    if(r) return r;
+    return analyzeOle(buffer) || scanBinaryForMsip(buffer); // 保護ファイルはOLE構造
+  }
+  return analyzeOle(buffer) || scanBinaryForMsip(buffer); // 旧形式
+}
+
+/* ===================== 秘密度の分類 ===================== */
+/* conf=秘密度あり / safe=秘密度なし / unknown=要確認 */
+
+const CONF_KEYWORDS=["レベル2","レベル3"]; // このラベル名を含む場合に「秘密度あり」
+function getKeywords(){ return CONF_KEYWORDS; }
+
+/* ラベルを付け替えた場合、旧ラベルの情報がメタデータに残留することがある。
+   複数のラベルが見つかったときは SetDate が最も新しいものを現在のラベルとみなす
+   （MIP SDK と同じ解決ルール）。日時が読めない・最新が複数あるときは
+   従来どおり全ラベルで判定する（安全側）。 */
+function pickActive(labels){
+  const named=labels.filter(l=>l.name);
+  if(named.length<=1) return {active:named[0]||null, superseded:[]};
+  const t=l=>{const d=Date.parse(l.setDate); return isNaN(d)?null:d;};
+  if(named.some(l=>t(l)===null)) return {active:null, superseded:[]};
+  const max=Math.max(...named.map(t));
+  const newest=named.filter(l=>t(l)===max);
+  if(newest.length!==1) return {active:null, superseded:[]};
+  return {active:newest[0], superseded:named.filter(l=>t(l)<max)};
+}
+
+function classify(rec, keywords){
+  if(rec.raw==="unknown") return "unknown";
+  if(rec.raw==="unlabeled") return "safe";
+  const named=rec.labels.filter(l=>l.name);
+  if(!named.length) return rec.protected ? "conf" : "unknown"; // 保護ファイルは外部不可＝秘密度あり
+  const pick=pickActive(rec.labels);
+  const judged=pick.active?[pick.active]:named;
+  const hit = judged.some(l => keywords.some(k => l.name.toLowerCase().includes(k.toLowerCase())));
+  if(hit) return "conf";
+  return rec.protected ? "conf" : "safe"; // ラベル名がレベル2/3でなくても暗号化保護なら秘密度あり
+}
+
+/* ===================== ファイル処理 ===================== */
+
+const results=[];
+const $=id=>document.getElementById(id);
+
+async function processSelection(files){
+  if(!files.length) return;
+
+  // 対象/対象外/ZIPに振り分け
+  const targets=[], zips=[], skipped=[];
+  for(const f of files){
+    const ext=extOf(f.name);
+    if(ext==="zip") zips.push(f);
+    else if(isTargetExt(ext)) targets.push(f);
+    else skipped.push(f.name);
+  }
+
+  if(skipped.length){
+    const head=skipped.slice(0,10).join("\n");
+    alert(`チェック対象外のファイルが ${skipped.length} 件含まれていたため除外しました。\n（対象：Word / Excel / PowerPoint / PDF / ZIP）\n\n${head}${skipped.length>10?"\n…ほか"+(skipped.length-10)+"件":""}`);
+    if(!targets.length && !zips.length) return;
+  }
+
+  // 処理キューを構築（ZIPは中身を展開して追加）
+  const queue=[];
+  for(const f of targets) queue.push({kind:"file", file:f});
+
+  const zipSkipped=[];
+  for(const zf of zips){
+    let buf;
+    try{ buf=await zf.arrayBuffer(); }
+    catch(e){ results.push(mkRec(zf.name,"","ZIP","unknown",[],"ZIP読み込みエラー")); continue; }
+    let entries;
+    try{ entries=zipListEntries(buf); }
+    catch(e){ results.push(mkRec(zf.name,"","ZIP","unknown",[],"ZIPとして解析できません")); continue; }
+    let inner=0;
+    for(const en of entries){
+      if(en.name.endsWith("/")) continue;
+      const base=en.name.split("/").pop();
+      if(base.startsWith("~$")||base.startsWith(".")) continue; // 一時ファイル等
+      const ext=extOf(base);
+      if(!isTargetExt(ext)){ if(ext!=="") zipSkipped.push(zf.name+" 内: "+en.name); continue; }
+      inner++;
+      queue.push({kind:"zipEntry", zipName:zf.name, zipBuf:buf, entry:en, ext, base});
+    }
+    if(!inner && !entries.some(e=>!e.name.endsWith("/")))
+      results.push(mkRec(zf.name,"","ZIP","unknown",[],"ZIP内にファイルがありません"));
+  }
+  if(zipSkipped.length){
+    alert(`ZIP内に対象外のファイルが ${zipSkipped.length} 件あったため除外しました。\n\n${zipSkipped.slice(0,10).join("\n")}${zipSkipped.length>10?"\n…ほか"+(zipSkipped.length-10)+"件":""}`);
+  }
+
+  if(queue.length>MAX_FILES){
+    alert(`一度にチェックできるのは最大 ${MAX_FILES} ファイルまでです（今回：${queue.length} ファイル）。\n分割して実行してください。`);
+    return;
+  }
+  if(!queue.length){ render(); return; }
+
+  const prog=$("progress"), bar=$("progBar"), txt=$("progText");
+  prog.classList.add("active");
+  for(let i=0;i<queue.length;i++){
+    const q=queue[i];
+    const dispName = q.kind==="file" ? q.file.name : q.base;
+    txt.textContent=`チェック中… ${i+1} / ${queue.length}　${dispName}`;
+    bar.style.width=Math.round(i/queue.length*100)+"%";
+    try{
+      if(q.kind==="file"){
+        const ext=extOf(q.file.name);
+        const buf=await q.file.arrayBuffer();
+        const r=await analyzeBuffer(ext, buf);
+        results.push(mkRec(q.file.name, q.file.webkitRelativePath||"", TYPE_LABELS[ext]||ext.toUpperCase(), r.raw, r.labels, r.note||"", r.protected));
+      }else{
+        if(q.entry.encrypted){
+          results.push(mkRec(q.base, q.zipName+" 内: "+q.entry.name, TYPE_LABELS[q.ext]||"", "unknown", [], "パスワード付きZIPのため展開できません"));
+        }else{
+          const data=await zipExtractEntry(q.zipBuf, q.entry);
+          const r=await analyzeBuffer(q.ext, data.buffer);
+          results.push(mkRec(q.base, q.zipName+" 内: "+q.entry.name, TYPE_LABELS[q.ext]||"", r.raw, r.labels, r.note||"", r.protected));
+        }
+      }
+    }catch(e){
+      results.push(mkRec(dispName, q.kind==="zipEntry"?q.zipName+" 内: "+q.entry.name:"", "", "unknown", [], "解析エラー: "+e.message));
+    }
+    if(i%10===9) render();
+  }
+  bar.style.width="100%";
+  setTimeout(()=>prog.classList.remove("active"),400);
+  render();
+}
+
+function mkRec(name,path,type,raw,labels,note,prot){
+  return {name,path,type,raw,labels,note,protected:!!prot};
+}
+
+/* ===================== UI ===================== */
+
+const dropzone=$("dropzone");
+dropzone.addEventListener("click",e=>{ if(e.target.tagName!=="BUTTON") $("fileInput").click(); });
+dropzone.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();$("fileInput").click();}});
+$("btnFiles").addEventListener("click",()=>$("fileInput").click());
+$("fileInput").addEventListener("change",e=>{ processSelection([...e.target.files]); e.target.value=""; });
+
+// ページ全体をドロップ対象にする（枠を外して落としてもブラウザがファイルを開かないように）
+["dragenter","dragover"].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault();dropzone.classList.add("dragover");}));
+window.addEventListener("dragleave",e=>{if(!e.relatedTarget)dropzone.classList.remove("dragover");});
+window.addEventListener("drop",async e=>{
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  const items=e.dataTransfer.items;
+  if(items&&items.length&&items[0].webkitGetAsEntry){
+    const files=[];
+    const walk=entry=>new Promise(resolve=>{
+      if(entry.isFile){
+        entry.file(f=>{
+          if(entry.fullPath&&entry.fullPath.length>1)
+            Object.defineProperty(f,"webkitRelativePath",{value:entry.fullPath.replace(/^\//,"")});
+          files.push(f);resolve();
+        },()=>resolve());
+      }else if(entry.isDirectory){
+        const reader=entry.createReader();
+        const readAll=()=>reader.readEntries(async ents=>{
+          if(!ents.length)return resolve();
+          await Promise.all(ents.map(walk));
+          readAll();
+        },()=>resolve());
+        readAll();
+      }else resolve();
+    });
+    await Promise.all([...items].map(it=>{const en=it.webkitGetAsEntry();return en?walk(en):Promise.resolve();}));
+    processSelection(files);
+  }else processSelection([...e.dataTransfer.files]);
+});
+
+function fmtDate(iso){
+  if(!iso) return "";
+  const d=new Date(iso); if(isNaN(d)) return iso;
+  const z=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())}`;
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+
+const ORDER={conf:0, unknown:1, safe:2};
+const BADGE={conf:"秘密度あり", safe:"秘密度なし", unk:"手動確認要"};
+
+function render(){
+  if(!results.length){
+    ["summary","rule","tableCard"].forEach(id=>$(id).classList.remove("show"));
+    return;
+  }
+  const kws=getKeywords();
+  const rows=results.map(r=>({r, cls:classify(r,kws)}));
+  rows.sort((a,b)=>ORDER[a.cls]-ORDER[b.cls]);
+
+  const nConf = rows.filter(x=>x.cls==="conf").length;
+  const nUnk  = rows.filter(x=>x.cls==="unknown").length;
+  $("stTotal").textContent = rows.length;
+  $("stConf").textContent  = nConf;
+  $("stUnk").textContent   = nUnk;
+  $("statConf").classList.toggle("zero", nConf===0);
+  $("statUnk").classList.toggle("zero", nUnk===0);
+  ["summary","rule","tableCard"].forEach(id=>$(id).classList.add("show"));
+
+  $("tbody").innerHTML = rows.map((x,i)=>{
+    const r=x.r, pick=pickActive(r.labels), lab=pick.active||r.labels[0];
+    const badgeCls = x.cls==="unknown"?"unk":x.cls;
+    let labelCell;
+    if(lab){
+      labelCell = `<div class="lname">${esc(lab.name||"（名称未記録）")}</div>`;
+    }else{
+      labelCell = r.raw==="unlabeled" ? `<span class="meta">ラベルなし</span>` : `<span class="meta">—</span>`;
+    }
+    let remark = r.note || "";
+    if(pick.superseded.length){
+      remark += (remark?"。":"") + "付け替え前の旧ラベル「" + pick.superseded.map(l=>l.name).join("」「") + "」の痕跡あり（最新のラベルで判定）";
+    }
+    if(x.cls==="unknown" && !remark) remark = "ラベル名が記録されておらず区分を判定できません";
+    if(x.cls==="unknown") remark += (remark?"。":"") + "ファイルを開いて秘密度を直接確認してください";
+    return `<tr class="${x.cls==="conf"?"conf":""}">
+      <td class="num">${i+1}</td>
+      <td><div class="fname">${esc(r.name)}</div></td>
+      <td class="ftype">${esc(r.type)}</td>
+      <td><span class="badge ${badgeCls}">${BADGE[badgeCls]}</span></td>
+      <td>${labelCell}</td>
+      <td class="meta" style="max-width:230px">${esc(remark)}</td>
+    </tr>`;
+  }).join("");
+}
+
+$("btnClear").addEventListener("click",()=>{ results.length=0; render(); });
+
+if(typeof DecompressionStream==="undefined"){
+  alert("このブラウザは解析に必要な機能（DecompressionStream）に対応していません。\nMicrosoft Edge / Google Chrome の新しいバージョンでお使いください。");
+}
+</script>
+</body>
+</html>
