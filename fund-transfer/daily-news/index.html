@@ -143,5 +143,13 @@
   </div>
 </footer>
 
+<script>
+  // 投稿内の外部リンク（出典）は新しいタブで開く
+  document.querySelectorAll('.post-body a[href^="http"]').forEach(function(a){
+    a.target = "_blank";
+    a.rel = "noopener";
+  });
+</script>
+
 </body>
 </html>
