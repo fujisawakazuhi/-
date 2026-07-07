@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWIFT/BICコード照会</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2244%22 fill=%22%230f6660%22/%3E%3Cpath d=%22M28 40 h44 M28 54 h44 M40 28 L34 72 M66 28 L60 72%22 stroke=%22%23fff%22 stroke-width=%226%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#eef1f2; --ink:#17222c; --ink-soft:#63707b;
+    --card:#fff; --line:#e2e7e9;
+    --red:#c4321f; --red-soft:#fbeae7;
+    --teal:#0f6660; --teal-2:#17a294; --teal-soft:#e2f1ef;
+    --amber:#9a6a14; --amber-soft:#faf1dc;
+    --shadow:0 1px 2px rgba(15,40,38,.05),0 16px 40px -20px rgba(15,60,55,.22);
+    --mono:ui-monospace,"SFMono-Regular",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.7;padding-bottom:60px;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px}
+
+  header{
+    background:linear-gradient(135deg,#0b2f2c 0%,#0f4c47 55%,#15655d 100%);
+    color:#fff;padding:24px 0 30px;position:relative;overflow:hidden;
+  }
+  header::before{
+    content:"";position:absolute;width:400px;height:400px;border-radius:50%;
+    right:-140px;top:-180px;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,255,255,.13),transparent 65%);
+  }
+  header .wrap{position:relative}
+  .back{
+    display:inline-block;font-size:.8rem;font-weight:600;text-decoration:none;
+    color:rgba(255,255,255,.75);margin-bottom:12px;
+  }
+  .back:hover{color:#fff}
+  .head-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  h1{font-size:1.55rem;font-weight:800;letter-spacing:.02em;line-height:1.25}
+  h1 small{display:block;font-size:.76rem;font-weight:500;color:rgba(255,255,255,.72);letter-spacing:.06em;margin-top:4px}
+  .local-badge{
+    margin-left:auto;font-weight:700;font-size:.82rem;color:#fff;
+    border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);
+    border-radius:12px;padding:8px 14px;white-space:nowrap;text-align:center;
+    backdrop-filter:blur(6px);
+  }
+  .local-badge .main::before{content:"✓ "}
+  .local-badge .sub{display:block;font-size:.66rem;font-weight:500;margin-top:2px;color:rgba(255,255,255,.78)}
+
+  main{margin-top:22px}
+  .input-card{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:22px;box-shadow:var(--shadow);
+  }
+  label.fld{display:block;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:8px}
+  #bic{
+    width:100%;font-family:var(--mono);font-size:1.6rem;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;
+    border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;
+    color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;
+  }
+  #bic:focus{border-color:var(--teal-2);box-shadow:0 0 0 4px rgba(23,162,148,.12)}
+  .examples{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .examples .lbl{font-size:.76rem;color:var(--ink-soft);margin-right:2px}
+  .ex{
+    font-family:var(--mono);font-size:.8rem;font-weight:700;cursor:pointer;
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--ink);
+  }
+  .ex:hover{background:var(--teal-soft);border-color:#bcd9d5;color:var(--teal)}
+
+  .result{margin-top:18px;display:none}
+  .result.show{display:block}
+
+  .verdict{
+    display:flex;align-items:center;gap:10px;border-radius:14px;
+    padding:14px 18px;font-weight:800;font-size:.98rem;
+  }
+  .verdict .ico{font-size:1.2rem}
+  .verdict.ok{background:var(--teal-soft);color:var(--teal)}
+  .verdict.warn{background:var(--amber-soft);color:var(--amber)}
+  .verdict.bad{background:var(--red-soft);color:var(--red)}
+  .errs{margin:10px 0 0;padding-left:1.2em;font-size:.84rem;color:var(--red)}
+  .errs li{margin-top:3px}
+
+  .bankname{
+    margin-top:16px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:18px 20px;box-shadow:0 1px 2px rgba(15,40,38,.04);
+  }
+  .bankname .nm{font-size:1.25rem;font-weight:800;line-height:1.3}
+  .bankname .ct{font-size:.86rem;color:var(--ink-soft);margin-top:2px}
+  .bankname .src{font-size:.72rem;color:var(--amber);margin-top:8px;font-weight:700}
+  .bankname.nohit .nm{font-size:1rem;font-weight:700;color:var(--ink-soft)}
+
+  .breakdown{
+    margin-top:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,40,38,.04);
+  }
+  .bd-code{
+    display:flex;gap:4px;flex-wrap:wrap;padding:16px 18px 10px;font-family:var(--mono);
+  }
+  .seg{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .seg .ch{
+    font-size:1.5rem;font-weight:800;letter-spacing:.06em;
+    padding:4px 8px;border-radius:8px;line-height:1.1;
+  }
+  .seg.inst .ch{background:#e8eef7;color:#2f4f8f}
+  .seg.ctry .ch{background:var(--teal-soft);color:var(--teal)}
+  .seg.loc .ch{background:#f0ecf7;color:#6a4a9a}
+  .seg.brch .ch{background:#f3f0e6;color:#8a6a24}
+  .seg .cap{font-size:.62rem;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  tbody td{padding:11px 18px;border-top:1px solid #eef2f2;vertical-align:top}
+  tbody td:first-child{color:var(--ink-soft);width:38%;white-space:nowrap}
+  tbody td b{font-weight:700}
+  .flag{font-size:1.05rem;margin-right:5px}
+
+  .official{
+    margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;
+  }
+  .official p{font-size:.82rem;color:var(--ink-soft);flex:1;min-width:200px}
+  .official a{
+    font-size:.84rem;font-weight:700;color:#fff;text-decoration:none;white-space:nowrap;
+    background:linear-gradient(135deg,var(--teal-2),var(--teal));border-radius:999px;padding:9px 18px;
+    box-shadow:0 8px 20px -8px rgba(15,102,96,.5);
+  }
+  .official a:hover{transform:translateY(-1px)}
+
+  footer{margin-top:26px;font-size:.78rem;color:var(--ink-soft);line-height:1.75}
+  footer h3{font-size:.9rem;color:var(--ink);margin-bottom:6px}
+  footer p{margin-top:10px}
+  footer b{color:var(--ink)}
+  footer code{font-family:var(--mono);background:#e6ebec;padding:1px 5px;border-radius:4px;font-size:.86em}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="back" href="../">← ツール集にもどる</a>
+    <div class="head-row">
+      <h1>SWIFT / BICコード照会<small>コードの構造解読＋主要金融機関の照合</small></h1>
+      <span class="local-badge"><span class="main">入力は送信されません</span><span class="sub">照合はすべてこの端末内で完結</span></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="input-card">
+    <label class="fld" for="bic">SWIFTコード（BIC）を入力</label>
+    <input id="bic" type="text" inputmode="latin" autocomplete="off" spellcheck="false"
+      maxlength="11" placeholder="例: BOTKJPJT" aria-label="BICコード">
+    <div class="examples">
+      <span class="lbl">例:</span>
+      <button class="ex" type="button">BOTKJPJT</button>
+      <button class="ex" type="button">SMBCJPJT</button>
+      <button class="ex" type="button">CHASUS33</button>
+      <button class="ex" type="button">DBSSSGSG</button>
+      <button class="ex" type="button">BFTVVNVX</button>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="verdict" id="verdict"><span class="ico"></span><span id="verdictText"></span></div>
+    <ul class="errs" id="errs" style="display:none"></ul>
+
+    <div class="bankname" id="bankBox" style="display:none">
+      <div class="nm" id="bankName"></div>
+      <div class="ct" id="bankCity"></div>
+      <div class="src" id="bankSrc"></div>
+    </div>
+
+    <div class="breakdown" id="breakdown">
+      <div class="bd-code" id="bdCode"></div>
+      <table><tbody id="bdTable"></tbody></table>
+    </div>
+
+    <div class="official">
+      <p>辞書に無い、または正式名称を確定したい場合は、SWIFT公式の無料BIC検索でご確認ください。</p>
+      <a id="swiftLink" href="https://www2.swift.com/bsl/" target="_blank" rel="noopener">SWIFT公式で確認 →</a>
+    </div>
+  </div>
+
+  <footer>
+    <h3>このツールについて</h3>
+    <p><b>処理方法：</b>入力したコードはお使いのブラウザ内でのみ照合され、外部に送信されません（通信するプログラムは含まれていません）。「SWIFT公式で確認」ボタンを押したときだけ、そのコードが公式サイトのURLに渡ります。</p>
+    <p><b>コードの読み方：</b>BIC（＝SWIFTコード、ISO 9362）はコード自体に情報が含まれています。<code>先頭4字</code>＝金融機関、<code>5〜6字目</code>＝国（ISO国コード）、<code>7〜8字目</code>＝所在地、<code>9〜11字目</code>＝支店（無い場合は本店）。本ツールは国と形式の正否をコードから直接判定します。</p>
+    <p><b>金融機関名について：</b>「BIC→金融機関名」の完全な公式データベースはSWIFT社の有償商品です。本ツールが表示する金融機関名は、公開情報をもとに主要行を収録した<b>参考用の内蔵辞書</b>で、網羅的ではなく、統廃合等で古くなる可能性があります。<b>送金指図など正式な用途では必ずSWIFT公式または受取人にご確認ください。</b></p>
+    <p style="margin-top:14px;text-align:right">バージョン 1.0 ／ 内蔵辞書は参考情報です</p>
+  </footer>
+</main>
+
+<script>
+"use strict";
+
+/* ===== ISO 3166-1 alpha-2 → 国名（日本語）。送金で使う国を広くカバー ===== */
+const COUNTRIES = {
+AD:"アンドラ",AE:"アラブ首長国連邦",AF:"アフガニスタン",AG:"アンティグア・バーブーダ",AI:"アンギラ",AL:"アルバニア",AM:"アルメニア",AO:"アンゴラ",AR:"アルゼンチン",AT:"オーストリア",AU:"オーストラリア",AW:"アルバ",AZ:"アゼルバイジャン",
+BA:"ボスニア・ヘルツェゴビナ",BB:"バルバドス",BD:"バングラデシュ",BE:"ベルギー",BF:"ブルキナファソ",BG:"ブルガリア",BH:"バーレーン",BI:"ブルンジ",BJ:"ベナン",BM:"バミューダ",BN:"ブルネイ",BO:"ボリビア",BR:"ブラジル",BS:"バハマ",BT:"ブータン",BW:"ボツワナ",BY:"ベラルーシ",BZ:"ベリーズ",
+CA:"カナダ",CD:"コンゴ民主共和国",CF:"中央アフリカ共和国",CG:"コンゴ共和国",CH:"スイス",CI:"コートジボワール",CL:"チリ",CM:"カメルーン",CN:"中国",CO:"コロンビア",CR:"コスタリカ",CU:"キューバ",CV:"カーボベルデ",CY:"キプロス",CZ:"チェコ",
+DE:"ドイツ",DJ:"ジブチ",DK:"デンマーク",DM:"ドミニカ国",DO:"ドミニカ共和国",DZ:"アルジェリア",
+EC:"エクアドル",EE:"エストニア",EG:"エジプト",ER:"エリトリア",ES:"スペイン",ET:"エチオピア",
+FI:"フィンランド",FJ:"フィジー",FM:"ミクロネシア",FO:"フェロー諸島",FR:"フランス",
+GA:"ガボン",GB:"英国",GD:"グレナダ",GE:"ジョージア",GG:"ガーンジー",GH:"ガーナ",GI:"ジブラルタル",GL:"グリーンランド",GM:"ガンビア",GN:"ギニア",GQ:"赤道ギニア",GR:"ギリシャ",GT:"グアテマラ",GU:"グアム",GW:"ギニアビサウ",GY:"ガイアナ",
+HK:"香港",HN:"ホンジュラス",HR:"クロアチア",HT:"ハイチ",HU:"ハンガリー",
+ID:"インドネシア",IE:"アイルランド",IL:"イスラエル",IM:"マン島",IN:"インド",IQ:"イラク",IR:"イラン",IS:"アイスランド",IT:"イタリア",
+JE:"ジャージー",JM:"ジャマイカ",JO:"ヨルダン",JP:"日本",
+KE:"ケニア",KG:"キルギス",KH:"カンボジア",KI:"キリバス",KM:"コモロ",KN:"セントクリストファー・ネイビス",KP:"北朝鮮",KR:"韓国",KW:"クウェート",KY:"ケイマン諸島",KZ:"カザフスタン",
+LA:"ラオス",LB:"レバノン",LC:"セントルシア",LI:"リヒテンシュタイン",LK:"スリランカ",LR:"リベリア",LS:"レソト",LT:"リトアニア",LU:"ルクセンブルク",LV:"ラトビア",LY:"リビア",
+MA:"モロッコ",MC:"モナコ",MD:"モルドバ",ME:"モンテネグロ",MG:"マダガスカル",MH:"マーシャル諸島",MK:"北マケドニア",ML:"マリ",MM:"ミャンマー",MN:"モンゴル",MO:"マカオ",MR:"モーリタニア",MT:"マルタ",MU:"モーリシャス",MV:"モルディブ",MW:"マラウイ",MX:"メキシコ",MY:"マレーシア",MZ:"モザンビーク",
+NA:"ナミビア",NC:"ニューカレドニア",NE:"ニジェール",NG:"ナイジェリア",NI:"ニカラグア",NL:"オランダ",NO:"ノルウェー",NP:"ネパール",NR:"ナウル",NZ:"ニュージーランド",
+OM:"オマーン",
+PA:"パナマ",PE:"ペルー",PF:"フランス領ポリネシア",PG:"パプアニューギニア",PH:"フィリピン",PK:"パキスタン",PL:"ポーランド",PR:"プエルトリコ",PS:"パレスチナ",PT:"ポルトガル",PW:"パラオ",PY:"パラグアイ",
+QA:"カタール",
+RO:"ルーマニア",RS:"セルビア",RU:"ロシア",RW:"ルワンダ",
+SA:"サウジアラビア",SB:"ソロモン諸島",SC:"セーシェル",SD:"スーダン",SE:"スウェーデン",SG:"シンガポール",SI:"スロベニア",SK:"スロバキア",SL:"シエラレオネ",SM:"サンマリノ",SN:"セネガル",SO:"ソマリア",SR:"スリナム",SS:"南スーダン",ST:"サントメ・プリンシペ",SV:"エルサルバドル",SY:"シリア",SZ:"エスワティニ",
+TD:"チャド",TG:"トーゴ",TH:"タイ",TJ:"タジキスタン",TL:"東ティモール",TM:"トルクメニスタン",TN:"チュニジア",TO:"トンガ",TR:"トルコ",TT:"トリニダード・トバゴ",TV:"ツバル",TW:"台湾",TZ:"タンザニア",
+UA:"ウクライナ",UG:"ウガンダ",US:"米国",UY:"ウルグアイ",UZ:"ウズベキスタン",
+VA:"バチカン",VC:"セントビンセント・グレナディーン",VE:"ベネズエラ",VG:"英領ヴァージン諸島",VN:"ベトナム",VU:"バヌアツ",
+WS:"サモア",
+YE:"イエメン",
+ZA:"南アフリカ",ZM:"ザンビア",ZW:"ジンバブエ"
+};
+
+/* ===== 主要金融機関 BIC辞書（参考・公開情報ベース／非網羅）。キーは先頭8桁 ===== */
+const BANKS = {
+// 日本
+"BOTKJPJT":{n:"三菱UFJ銀行（MUFG Bank）",c:"東京"},
+"SMBCJPJT":{n:"三井住友銀行（SMBC）",c:"東京"},
+"MHCBJPJT":{n:"みずほ銀行",c:"東京"},
+"SMTCJPJT":{n:"三井住友信託銀行",c:"東京"},
+"DIWAJPJT":{n:"りそな銀行",c:"東京"},
+// 米国
+"CHASUS33":{n:"JPMorgan Chase Bank",c:"ニューヨーク"},
+"BOFAUS3N":{n:"Bank of America",c:"ニューヨーク"},
+"CITIUS33":{n:"Citibank",c:"ニューヨーク"},
+"IRVTUS3N":{n:"The Bank of New York Mellon",c:"ニューヨーク"},
+"WFBIUS6S":{n:"Wells Fargo Bank",c:"サンフランシスコ"},
+// 英国
+"BARCGB22":{n:"Barclays Bank",c:"ロンドン"},
+"HBUKGB4B":{n:"HSBC UK Bank",c:"ロンドン"},
+"MIDLGB22":{n:"HSBC Bank plc",c:"ロンドン"},
+"NWBKGB2L":{n:"NatWest（National Westminster Bank）",c:"ロンドン"},
+"LOYDGB2L":{n:"Lloyds Bank",c:"ロンドン"},
+// 欧州
+"DEUTDEFF":{n:"Deutsche Bank",c:"フランクフルト"},
+"COBADEFF":{n:"Commerzbank",c:"フランクフルト"},
+"BNPAFRPP":{n:"BNP Paribas",c:"パリ"},
+"SOGEFRPP":{n:"Société Générale",c:"パリ"},
+"INGBNL2A":{n:"ING Bank",c:"アムステルダム"},
+"ABNANL2A":{n:"ABN AMRO Bank",c:"アムステルダム"},
+"UBSWCHZH":{n:"UBS",c:"チューリッヒ"},
+// 中国
+"ICBKCNBJ":{n:"中国工商銀行（ICBC）",c:"北京"},
+"BKCHCNBJ":{n:"中国銀行（Bank of China）",c:"北京"},
+"ABOCCNBJ":{n:"中国農業銀行（ABC）",c:"北京"},
+"PCBCCNBJ":{n:"中国建設銀行（CCB）",c:"北京"},
+"COMMCNSH":{n:"交通銀行（Bank of Communications）",c:"上海"},
+// 香港
+"HSBCHKHH":{n:"香港上海銀行（HSBC）",c:"香港"},
+"HASEHKHH":{n:"恒生銀行（Hang Seng Bank）",c:"香港"},
+"SCBLHKHH":{n:"Standard Chartered Bank (HK)",c:"香港"},
+"BKCHHKHH":{n:"中国銀行（香港）",c:"香港"},
+// シンガポール
+"DBSSSGSG":{n:"DBS Bank",c:"シンガポール"},
+"UOVBSGSG":{n:"United Overseas Bank（UOB）",c:"シンガポール"},
+"OCBCSGSG":{n:"OCBC Bank",c:"シンガポール"},
+// フィリピン
+"BOPIPHMM":{n:"Bank of the Philippine Islands（BPI）",c:"マニラ"},
+"MBTCPHMM":{n:"Metrobank（Metropolitan Bank & Trust）",c:"マニラ"},
+"BNORPHMM":{n:"BDO Unibank",c:"マニラ"},
+"PNBMPHMM":{n:"Philippine National Bank（PNB）",c:"マニラ"},
+// ベトナム
+"BFTVVNVX":{n:"Vietcombank（ベトナム外商銀行）",c:"ハノイ"},
+"ICBVVNVX":{n:"VietinBank",c:"ハノイ"},
+"BIDVVNVX":{n:"BIDV（ベトナム投資開発銀行）",c:"ハノイ"},
+// インドネシア
+"BMRIIDJA":{n:"Bank Mandiri",c:"ジャカルタ"},
+"BNINIDJA":{n:"Bank Negara Indonesia（BNI）",c:"ジャカルタ"},
+"CENAIDJA":{n:"Bank Central Asia（BCA）",c:"ジャカルタ"},
+"BRINIDJA":{n:"Bank Rakyat Indonesia（BRI）",c:"ジャカルタ"},
+// タイ
+"BKKBTHBK":{n:"Bangkok Bank",c:"バンコク"},
+"KASITHBK":{n:"Kasikornbank",c:"バンコク"},
+"SICOTHBK":{n:"Siam Commercial Bank（SCB）",c:"バンコク"},
+"KRTHTHBK":{n:"Krung Thai Bank",c:"バンコク"},
+// インド
+"SBININBB":{n:"State Bank of India",c:"ムンバイ"},
+"HDFCINBB":{n:"HDFC Bank",c:"ムンバイ"},
+"ICICINBB":{n:"ICICI Bank",c:"ムンバイ"},
+"AXISINBB":{n:"Axis Bank",c:"ムンバイ"},
+// ネパール
+"NABLNPKA":{n:"Nabil Bank",c:"カトマンズ"},
+// 韓国
+"SHBKKRSE":{n:"Shinhan Bank（新韓銀行）",c:"ソウル"},
+"CZNBKRSE":{n:"KB Kookmin Bank",c:"ソウル"},
+// オーストラリア
+"CTBAAU2S":{n:"Commonwealth Bank of Australia",c:"シドニー"},
+"NATAAU33":{n:"National Australia Bank（NAB）",c:"メルボルン"},
+"WPACAU2S":{n:"Westpac Banking Corporation",c:"シドニー"},
+"ANZBAU3M":{n:"ANZ Banking Group",c:"メルボルン"},
+// カナダ
+"ROYCCAT2":{n:"Royal Bank of Canada（RBC）",c:"トロント"},
+"NOSCCATT":{n:"Scotiabank（Bank of Nova Scotia）",c:"トロント"},
+"TDOMCATT":{n:"Toronto-Dominion Bank（TD）",c:"トロント"}
+};
+
+const $=id=>document.getElementById(id);
+
+function flagEmoji(cc){
+  if(!/^[A-Z]{2}$/.test(cc)) return "";
+  return String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65));
+}
+
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function analyze(raw){
+  const bic=raw.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const errs=[];
+  const inst=bic.slice(0,4), ctry=bic.slice(4,6), loc=bic.slice(6,8), brch=bic.slice(8,11);
+
+  if(bic.length!==8 && bic.length!==11)
+    errs.push("長さは8桁または11桁である必要があります（入力は"+bic.length+"桁）");
+  if(!/^[A-Z]{4}$/.test(inst))
+    errs.push("先頭4文字（金融機関コード）は英字のみです");
+  if(!/^[A-Z]{2}$/.test(ctry))
+    errs.push("5〜6文字目（国コード）は英字のみです");
+  else if(!COUNTRIES[ctry])
+    errs.push("国コード「"+ctry+"」は有効なISO国コードとして認識できません（入力ミスの可能性）");
+  if(bic.length>=8 && !/^[A-Z0-9]{2}$/.test(loc))
+    errs.push("7〜8文字目（ロケーションコード）は英数字のみです");
+  if(bic.length===11 && !/^[A-Z0-9]{3}$/.test(brch))
+    errs.push("9〜11文字目（支店コード）は英数字のみです");
+
+  return {bic,inst,ctry,loc,brch,errs,valid:errs.length===0};
+}
+
+function locNote(loc){
+  const d=loc.charAt(1);
+  if(d==="0") return "末尾が0＝テスト／SWIFTネットワーク未接続のBIC";
+  if(d==="1") return "末尾が1＝パッシブ参加（受信専用等）のBIC";
+  if(d==="2") return "末尾が2＝リバースビリング対応のBIC";
+  return "通常の接続BIC";
+}
+
+function render(raw){
+  const r=analyze(raw);
+  const res=$("result");
+  if(r.bic.length===0){ res.classList.remove("show"); return; }
+  res.classList.add("show");
+
+  // verdict
+  const v=$("verdict"), vt=$("verdictText"), errsEl=$("errs");
+  if(r.valid){
+    v.className="verdict ok"; v.querySelector(".ico").textContent="✓";
+    vt.textContent="形式は有効なBICです";
+    errsEl.style.display="none"; errsEl.innerHTML="";
+  }else{
+    const onlyLen = r.errs.length===1 && r.errs[0].startsWith("長さ") && r.bic.length<8;
+    v.className="verdict "+(onlyLen?"warn":"bad");
+    v.querySelector(".ico").textContent=onlyLen?"…":"！";
+    vt.textContent=onlyLen?"入力中…（8桁または11桁）":"形式に問題があります";
+    errsEl.style.display="block";
+    errsEl.innerHTML=r.errs.map(e=>"<li>"+esc(e)+"</li>").join("");
+  }
+
+  // bank dictionary
+  const bank=BANKS[r.bic.slice(0,8)];
+  const bankBox=$("bankBox");
+  if(bank && r.bic.length>=8 && /^[A-Z]{6}[A-Z0-9]{2}/.test(r.bic)){
+    bankBox.style.display="block"; bankBox.className="bankname";
+    $("bankName").textContent=bank.n;
+    $("bankCity").textContent=(COUNTRIES[r.ctry]||r.ctry)+"・"+bank.c;
+    $("bankSrc").textContent="※ 参考情報（内蔵辞書）。正式には公式でご確認ください";
+  }else if(r.bic.length>=8 && /^[A-Z]{6}[A-Z0-9]{2}/.test(r.bic)){
+    bankBox.style.display="block"; bankBox.className="bankname nohit";
+    $("bankName").textContent="この金融機関は内蔵辞書に収録されていません";
+    $("bankCity").textContent="下のSWIFT公式検索で名称をご確認ください。";
+    $("bankSrc").textContent="";
+  }else{
+    bankBox.style.display="none";
+  }
+
+  // segment breakdown
+  const segs=[];
+  const mk=(cls,cap,txt)=> txt ? '<div class="seg '+cls+'"><span class="ch">'+esc(txt)+'</span><span class="cap">'+cap+'</span></div>' : "";
+  segs.push(mk("inst","金融機関",r.inst));
+  segs.push(mk("ctry","国",r.ctry));
+  segs.push(mk("loc","所在地",r.loc));
+  if(r.brch) segs.push(mk("brch","支店",r.brch));
+  $("bdCode").innerHTML=segs.join("");
+
+  const rows=[];
+  const cn=COUNTRIES[r.ctry];
+  rows.push(["金融機関コード","<b>"+esc(r.inst)+"</b>"]);
+  rows.push(["国 (ISO)", (flagEmoji(r.ctry)?'<span class="flag">'+flagEmoji(r.ctry)+'</span>':"")+"<b>"+esc(r.ctry)+"</b>"+(cn?"（"+esc(cn)+"）":"（未収録の国コード）")]);
+  if(r.bic.length>=8) rows.push(["ロケーションコード","<b>"+esc(r.loc)+"</b> — "+locNote(r.loc)]);
+  const branchTxt = r.bic.length===11
+    ? (r.brch==="XXX" ? "<b>XXX</b>（本店）" : "<b>"+esc(r.brch)+"</b>（支店）")
+    : "指定なし（＝本店）";
+  rows.push(["支店コード", branchTxt]);
+  $("bdTable").innerHTML=rows.map(x=>"<tr><td>"+x[0]+"</td><td>"+x[1]+"</td></tr>").join("");
+
+  // official link with prefilled query
+  $("swiftLink").href = /^[A-Z0-9]{8,11}$/.test(r.bic)
+    ? "https://www2.swift.com/bsl/"   // 公式検索（コード貼り付けで照会）
+    : "https://www2.swift.com/bsl/";
+}
+
+const input=$("bic");
+input.addEventListener("input",()=>{
+  const p=input.selectionStart;
+  input.value=input.value.toUpperCase();
+  input.setSelectionRange(p,p);
+  render(input.value);
+});
+document.querySelectorAll(".ex").forEach(b=>{
+  b.addEventListener("click",()=>{ input.value=b.textContent; render(input.value); input.focus(); });
+});
+</script>
+</body>
+</html>
