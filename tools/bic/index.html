@@ -129,6 +129,32 @@
   }
   .official a:hover{transform:translateY(-1px)}
 
+  .listwrap{margin-top:14px}
+  .list-toggle{
+    font-family:inherit;font-size:.8rem;font-weight:700;color:var(--teal);
+    background:var(--teal-soft);border:1px solid #cfe6e2;border-radius:999px;
+    padding:8px 16px;cursor:pointer;
+  }
+  .list-toggle:hover{background:#d5ebe7}
+  .list-panel{
+    margin-top:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:18px 20px;box-shadow:var(--shadow);display:none;
+  }
+  .list-panel.show{display:block}
+  .list-panel .cty{
+    font-weight:800;font-size:.9rem;margin:16px 0 6px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .list-panel .cty:first-child{margin-top:0}
+  .list-panel .row{
+    display:flex;gap:10px;font-size:.83rem;padding:4px 0;border-top:1px solid #f1f4f4;
+  }
+  .list-panel .row code{
+    font-family:var(--mono);font-weight:700;color:var(--teal);
+    min-width:92px;flex:none;
+  }
+  .list-note{font-size:.74rem;color:var(--ink-soft);margin-top:14px;line-height:1.7}
+
   footer{margin-top:26px;font-size:.78rem;color:var(--ink-soft);line-height:1.75}
   footer h3{font-size:.9rem;color:var(--ink);margin-bottom:6px}
   footer p{margin-top:10px}
@@ -161,7 +187,12 @@
       <button class="ex" type="button">DBSSSGSG</button>
       <button class="ex" type="button">BFTVVNVX</button>
     </div>
+    <div class="listwrap">
+      <button class="list-toggle" id="listBtn" type="button">📖 収録一覧を見る</button>
+    </div>
   </div>
+
+  <div class="list-panel" id="listPanel"></div>
 
   <div class="result" id="result">
     <div class="verdict" id="verdict"><span class="ico"></span><span id="verdictText"></span></div>
@@ -419,6 +450,31 @@ input.addEventListener("input",()=>{
 });
 document.querySelectorAll(".ex").forEach(b=>{
   b.addEventListener("click",()=>{ input.value=b.textContent; render(input.value); input.focus(); });
+});
+
+/* 収録一覧（BANKS辞書から自動生成。行を追加すれば一覧も自動更新される） */
+const listBtn=$("listBtn"), listPanel=$("listPanel");
+const BANK_COUNT=Object.keys(BANKS).length;
+listBtn.textContent="📖 収録一覧を見る（"+BANK_COUNT+"行）";
+function buildList(){
+  const groups=[];
+  for(const bic of Object.keys(BANKS)){
+    const cc=bic.slice(4,6);
+    if(!groups.length || groups[groups.length-1].cc!==cc) groups.push({cc,items:[]});
+    groups[groups.length-1].items.push(bic);
+  }
+  let html=groups.map(g=>{
+    const head='<div class="cty">'+(flagEmoji(g.cc)||"")+" "+esc(COUNTRIES[g.cc]||g.cc)+"（"+g.items.length+"）</div>";
+    const rows=g.items.map(bic=>'<div class="row"><code>'+esc(bic)+'</code><span>'+esc(BANKS[bic].n)+"（"+esc(BANKS[bic].c)+"）</span></div>").join("");
+    return head+rows;
+  }).join("");
+  html+='<p class="list-note">計'+BANK_COUNT+"行。公開情報をもとにした参考用の内蔵辞書で、網羅的ではありません。正式にはSWIFT公式または受取人にご確認ください。</p>";
+  listPanel.innerHTML=html;
+}
+listBtn.addEventListener("click",()=>{
+  const showing=listPanel.classList.toggle("show");
+  listBtn.textContent = showing ? "📖 収録一覧を閉じる" : "📖 収録一覧を見る（"+BANK_COUNT+"行）";
+  if(showing && !listPanel.dataset.built){ buildList(); listPanel.dataset.built="1"; }
 });
 </script>
 </body>
