@@ -1,0 +1,16 @@
+# マイポータル（fujisawakazuhi.github.io/-/）
+
+> 資金移動業・資金決済分野の情報ページと、ブラウザ内で完結する業務支援ツールを集めた個人サイト。8ビットゲーム風（富士山と桜）のデザイン。
+
+## 情報ページ（自動更新）
+- [資金移動業デイリーニュース](https://fujisawakazuhi.github.io/-/fund-transfer/daily-news/): 資金決済法・犯収法・金融庁動向・海外送金・ステーブルコイン等のニュースを1日1ポストで記録
+- [銀行為替レート比較](https://fujisawakazuhi.github.io/-/tools/bankrate/): みずほ・三菱UFJ・三井住友の公表TTS/TTBとWiseの中値を主要7通貨で比較（平日自動更新）
+- [資金移動業者 登録一覧ウォッチャー](https://fujisawakazuhi.github.io/-/fund-transfer/registry/): 金融庁公表の登録一覧を毎営業日チェックし、新規登録・登録抹消を差分記録
+- [行政処分アーカイブ](https://fujisawakazuhi.github.io/-/fund-transfer/shobun/): 金融庁の報道発表から資金決済関連の行政処分を自動収集
+
+## ツール（ブラウザ内で完結）
+- [海外送金コスト比較シミュレータ](https://fujisawakazuhi.github.io/-/tools/costsim/): 銀行TTSとWise中値で受取額・実質コストを試算
+- [秘密度一括チェック](https://fujisawakazuhi.github.io/-/tools/check/): Office/PDF/ZIPのMicrosoft Purview秘密度ラベルを完全ローカルで一括検査
+- [SWIFT/BICコード照会](https://fujisawakazuhi.github.io/-/tools/bic/): BICの解読と主要金融機関137行の辞書
+- [和暦⇔西暦・日付変換](https://fujisawakazuhi.github.io/-/tools/wareki/): 明治〜令和対応
+- [JPY為替レート確認・換算](https://fujisawakazuhi.github.io/-/tools/rate/)
