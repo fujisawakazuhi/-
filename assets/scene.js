@@ -29,53 +29,15 @@
   '<rect x="380" y="86" width="5" height="5"/><rect x="60" y="150" width="5" height="5"/></g>'+
   '</svg></div>';
 
-  /* 桜の枝（手前）: 14pxグリッドのドット絵。
-     花は十字5ドット＋金の中心＋濃ピンクの影アクセント（16bit風スプライト） */
-  function pxFlower(cx,cy,petal,deep){
-    var u=14,h=7;
-    return '<g fill="'+petal+'">'+
-      '<rect x="'+(cx-h)+'" y="'+(cy-h-u)+'" width="'+u+'" height="'+u+'"/>'+
-      '<rect x="'+(cx-h)+'" y="'+(cy-h+u)+'" width="'+u+'" height="'+u+'"/>'+
-      '<rect x="'+(cx-h-u)+'" y="'+(cy-h)+'" width="'+u+'" height="'+u+'"/>'+
-      '<rect x="'+(cx-h+u)+'" y="'+(cy-h)+'" width="'+u+'" height="'+u+'"/>'+
-      '</g>'+
-      '<g fill="'+deep+'">'+
-      '<rect x="'+(cx-h)+'" y="'+(cy+h+h)+'" width="'+u+'" height="'+h+'"/>'+
-      '<rect x="'+(cx+h)+'" y="'+(cy-h)+'" width="'+h+'" height="'+u+'"/>'+
-      '</g>'+
-      '<rect x="'+(cx-h)+'" y="'+(cy-h)+'" width="'+u+'" height="'+u+'" fill="#ffd94a"/>';
-  }
   var FG='<div class="px-fg" aria-hidden="true">'+
   '<svg viewBox="0 0 1000 200" preserveAspectRatio="xMaxYMin slice" shape-rendering="crispEdges"><g transform="translate(1000 0) scale(-1 1)">'+
-  '<g fill="#7a5a38">'+
-  '<rect x="84" y="0" width="154" height="28"/>'+
-  '<rect x="210" y="14" width="140" height="28"/>'+
-  '<rect x="322" y="28" width="126" height="28"/>'+
-  '<rect x="420" y="42" width="112" height="28"/>'+
-  '<rect x="252" y="42" width="28" height="56"/>'+
-  '<rect x="462" y="70" width="28" height="42"/>'+
-  '</g>'+
-  '<g fill="#63472c">'+
-  '<rect x="84" y="14" width="126" height="14"/>'+
-  '<rect x="210" y="28" width="112" height="14"/>'+
-  '<rect x="322" y="42" width="98" height="14"/>'+
-  '<rect x="420" y="56" width="112" height="14"/>'+
-  '<rect x="266" y="70" width="14" height="28"/>'+
-  '<rect x="476" y="98" width="14" height="14"/>'+
-  '</g>'+
-  pxFlower(126,49,"#fba9cd","#f78fbd")+
-  pxFlower(196,70,"#f78fbd","#e0679d")+
-  pxFlower(322,77,"#fba9cd","#f78fbd")+
-  pxFlower(266,119,"#f78fbd","#e0679d")+
-  pxFlower(420,91,"#fba9cd","#f78fbd")+
-  pxFlower(476,133,"#f78fbd","#e0679d")+
-  pxFlower(546,56,"#fba9cd","#f78fbd")+
-  '<g fill="#f7aecd">'+
-  '<rect x="168" y="28" width="14" height="14"/>'+
-  '<rect x="378" y="56" width="14" height="14"/>'+
-  '<rect x="518" y="28" width="14" height="14"/>'+
-  '<rect x="308" y="154" width="14" height="14"/>'+
-  '</g>'+
+  '<path d="M150,-6 Q230,26 340,40 Q450,54 540,44" stroke="#7a5a38" stroke-width="11" fill="none"/>'+
+  '<path d="M240,28 Q256,48 264,64 M380,46 Q396,64 402,82" stroke="#7a5a38" stroke-width="6" fill="none"/>'+
+  '<g fill="#f78fbd"><circle cx="262" cy="64" r="9"/><circle cx="275" cy="71" r="9"/><circle cx="267" cy="81" r="9"/><circle cx="254" cy="74" r="9"/></g><circle cx="265" cy="73" r="4" fill="#ffd94a"/>'+
+  '<g fill="#fba9cd"><circle cx="318" cy="26" r="9"/><circle cx="331" cy="33" r="9"/><circle cx="323" cy="43" r="9"/><circle cx="310" cy="36" r="9"/></g><circle cx="321" cy="35" r="4" fill="#ffd94a"/>'+
+  '<g fill="#f78fbd"><circle cx="402" cy="82" r="9"/><circle cx="415" cy="89" r="9"/><circle cx="407" cy="99" r="9"/><circle cx="394" cy="92" r="9"/></g><circle cx="405" cy="91" r="4" fill="#ffd94a"/>'+
+  '<g fill="#fba9cd"><circle cx="462" cy="42" r="8"/><circle cx="474" cy="48" r="8"/><circle cx="467" cy="57" r="8"/><circle cx="455" cy="51" r="8"/></g><circle cx="465" cy="50" r="3.5" fill="#ffd94a"/>'+
+    '<g fill="#fba9cd"><circle cx="196" cy="8" r="9"/><circle cx="209" cy="15" r="9"/><circle cx="201" cy="25" r="9"/><circle cx="188" cy="18" r="9"/></g><circle cx="199" cy="17" r="4" fill="#ffd94a"/>'+
   '</g></svg></div>';
 
   function inject(){
