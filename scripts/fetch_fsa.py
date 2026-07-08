@@ -56,12 +56,22 @@ def links_of(html, base_url):
 
 # ---------------- 資金移動業者登録一覧 ----------------
 
+SCHEMA = 2
+
+
+def clean_cell(v):
+    v = " ".join(str(v).split())
+    # "2022-01-31 00:00:00" → "2022-01-31"
+    m = re.match(r"^(\d{4}-\d{2}-\d{2}) 00:00:00$", v)
+    return m.group(1) if m else v
+
+
 def parse_reg_xlsx(raw):
     import openpyxl
     wb = openpyxl.load_workbook(io.BytesIO(raw), data_only=True, read_only=True)
     columns, ops = [], []
     for ws in wb.worksheets:
-        rows = [[("" if c is None else str(c).strip()) for c in row]
+        rows = [[("" if c is None else clean_cell(c)) for c in row]
                 for row in ws.iter_rows(values_only=True)]
         hi = None
         for i, row in enumerate(rows[:15]):
@@ -71,17 +81,28 @@ def parse_reg_xlsx(raw):
         if hi is None:
             continue
         hdr = rows[hi]
-        # 空でない列だけ残す
         keep = [j for j, h in enumerate(hdr) if h]
         cols = [hdr[j] for j in keep]
-        print("registry sheet:", ws.title, "columns:", cols[:8])
+        print("registry sheet:", ws.title, "columns:", cols)
         if not columns:
             columns = cols
+        cur = {}  # 所管・業務の種別のセクション値を引き継ぐ
         for row in rows[hi + 1:]:
             vals = [row[j] if j < len(row) else "" for j in keep]
             if not any(vals):
                 continue
-            ops.append(dict(zip(cols, vals)))
+            rec = dict(zip(cols, vals))
+            no = rec.get("登録番号", "")
+            name = next((rec[k] for k in rec if ("名" in k and "法人" not in k) and rec[k]), "")
+            for k in ("所管", "業務の種別"):
+                if rec.get(k):
+                    cur[k] = re.sub(r"【[^】]*】", "", rec[k]).strip()
+            if not no and not name:
+                continue  # 種別見出し行など
+            for k in ("所管", "業務の種別"):
+                if k in cols and not rec.get(k):
+                    rec[k] = cur.get(k, "")
+            ops.append(rec)
     return columns, ops
 
 
@@ -143,13 +164,16 @@ def get_registry(stamp, errors):
 
     print("registry parsed:", len(ops), "operators from", src)
 
-    # 前回との差分
+    # 前回との差分（スキーマ変更時はベースラインを取り直す）
     prev_ops, prev_exists = [], False
     try:
         with open(REG_OUT, encoding="utf-8") as f:
             prev = json.load(f)
-            prev_ops = prev.get("operators", [])
-            prev_exists = bool(prev_ops)
+            if prev.get("schema") == SCHEMA:
+                prev_ops = prev.get("operators", [])
+                prev_exists = bool(prev_ops)
+            else:
+                print("registry: schema changed -> new baseline")
     except Exception:
         pass
 
@@ -171,75 +195,66 @@ def get_registry(stamp, errors):
         print("registry: baseline saved (no diff on first run)")
 
     with open(REG_OUT, "w", encoding="utf-8") as f:
-        json.dump({"updated": stamp, "source": src, "columns": columns,
+        json.dump({"updated": stamp, "schema": SCHEMA, "source": src, "columns": columns,
                    "count": len(ops), "operators": ops}, f, ensure_ascii=False, indent=1)
 
 
 # ---------------- 行政処分情報 ----------------
 
 def get_shobun(stamp, errors):
-    idx_candidates = [
-        BASE + "/status/syobun/index.html",
-        BASE + "/status/gyouseishobun/index.html",
-        BASE + "/status/s_gyousei/index.html",
-    ]
-    pages = []
-    # 金融庁トップ等から「行政処分」リンクを探索
-    for top in (BASE + "/index.html", BASE + "/policy/index.html", BASE + "/status/index.html"):
+    """報道発表の年度別一覧から「行政処分」×資金決済関連キーワードの発表を抽出。"""
+    # 年度別の報道発表一覧ページを発見
+    list_pages = []
+    for top in (BASE + "/news/index.html", BASE + "/news/"):
         try:
             html = decode_jp(fetch(top))
+            list_pages.append((top, html))
             for u, t in links_of(html, top):
-                if "行政処分" in t and u not in [p for p, _ in pages]:
-                    pages.append((u, t))
+                if re.search(r"(令和|平成)\s*\d+年度", t) and "/news/" in u:
+                    list_pages.append((u, None))
+            break
         except Exception as e:
-            print("shobun discover fail", top, repr(e))
-    print("shobun discovered links:", pages[:8])
-    for u in idx_candidates:
-        pages.append((u, "candidate"))
+            print("shobun news index fail", top, repr(e))
+    print("shobun list pages:", [(u, "") for u, _ in list_pages][:8])
 
     items = []
     seen_pages = set()
-    for url, t in pages[:6]:
+    for url, html in list_pages[:5]:
         if url in seen_pages:
             continue
         seen_pages.add(url)
-        try:
-            html = decode_jp(fetch(url))
-        except Exception as e:
-            print("shobun page fail", url, repr(e))
-            continue
-        print("--- shobun page", url, "len", len(html))
-        # 年度別ページへのリンクも1階層だけ辿る
-        sub = [(u2, t2) for u2, t2 in links_of(html, url)
-               if re.search(r"(令和|平成)\S*年度|nendo|\d{4}", u2 + t2) and "行政処分" in (t2 + url)]
-        targets = [(url, html)]
-        for u2, t2 in sub[:4]:
-            if u2 in seen_pages:
-                continue
-            seen_pages.add(u2)
+        if html is None:
             try:
-                targets.append((u2, decode_jp(fetch(u2))))
-                print("shobun sub page", u2, t2[:40])
+                html = decode_jp(fetch(url))
             except Exception as e:
-                print("shobun sub fail", u2, repr(e))
-        for purl, phtml in targets:
-            # 表の行ごとに: 日付・リンク・テキスト
-            for row in re.split(r"<tr[^>]*>", phtml):
-                plain = " ".join(re.sub(r"<[^>]+>", " ", row).split())
-                if not any(k in plain for k in SHOBUN_KEYWORDS):
-                    continue
-                lm = re.search(r'<a[^>]+href="([^"#]+)"[^>]*>(.*?)</a>', row, flags=re.S)
-                if not lm:
-                    continue
-                title = " ".join(re.sub(r"<[^>]+>", "", lm.group(2)).split())
-                if not title:
-                    title = plain[:80]
-                dm = re.search(r"(令和\s*\d+|平成\s*\d+|\d{4})\s*年\s*\d+\s*月\s*\d+\s*日", plain)
-                items.append({
-                    "date": dm.group(0).replace(" ", "") if dm else "",
-                    "title": title[:120],
-                    "url": absolutize(lm.group(1), purl),
-                })
+                print("shobun list fail", url, repr(e))
+                continue
+        print("--- shobun list", url, "len", len(html))
+        # 行単位（tr / li / dd）で日付・リンク・タイトルを抽出
+        blocks = re.split(r"<(?:tr|li|dt)[^>]*>", html)
+        near_miss = 0
+        for blk in blocks:
+            plain = " ".join(re.sub(r"<[^>]+>", " ", blk).split())
+            lm = re.search(r'<a[^>]+href="([^"#]+)"[^>]*>(.*?)</a>', blk, flags=re.S)
+            if not lm:
+                continue
+            title = " ".join(re.sub(r"<[^>]+>", "", lm.group(2)).split()) or plain[:80]
+            is_action = re.search(r"行政処分|業務停止|業務改善|登録の取消|登録取消", title)
+            if not is_action:
+                continue
+            if not any(k in title for k in SHOBUN_KEYWORDS):
+                near_miss += 1
+                if near_miss <= 5:
+                    print("shobun near-miss:", title[:80])
+                continue
+            dm = (re.search(r"(令和|平成)\s*\d+\s*年\s*\d+\s*月\s*\d+\s*日", plain)
+                  or re.search(r"\d{4}\s*年\s*\d+\s*月\s*\d+\s*日", plain))
+            items.append({
+                "date": dm.group(0).replace(" ", "") if dm else "",
+                "title": title[:140],
+                "url": absolutize(lm.group(1), url),
+            })
+        print("shobun page done, near-miss(actions w/o keyword):", near_miss)
     # 重複除去
     uniq, seen = [], set()
     for it in items:
