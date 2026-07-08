@@ -351,24 +351,71 @@ def get_mufg(out, errors):
         errors["mufg"] = repr(e)
 
 
+def parse_smbc_pdf(text):
+    """SMBC公示相場PDF（EXCHANGE QUOTATIONS）のパース。
+
+    行形式: "COUNTRY  CCY UNIT [CROSS参考値] T.T.S ACCEPT T.T.B D.D.B CASH-S CASH-B D/P"
+    USDのみCROSS列が無い。欠測は UNQUOTE。値は UNIT（1 or 100）通貨あたりの円。"""
+    rates = {}
+    for line in text.splitlines():
+        line = " ".join(line.split())
+        m = re.search(r"\b([A-Z]{3})\s+(1|100)\s+(.+)$", line)
+        if not m:
+            continue
+        ccy, unit = m.group(1), int(m.group(2))
+        if ccy not in SANE or ccy in rates:
+            continue
+        toks = re.findall(r"UNQUOTE|\d+(?:\.\d+)?", m.group(3))
+        if len(toks) < 7:
+            continue
+        cols = toks if ccy == "USD" else toks[1:]  # USD以外は先頭がクロス参考値
+        if len(cols) < 3:
+            continue
+
+        def val(i):
+            t = cols[i]
+            if t == "UNQUOTE":
+                return None
+            v = float(t) / unit
+            lo, hi = SANE[ccy]
+            return v if lo <= v <= hi else None
+
+        tts, ttb = val(0), val(2)
+        if tts is not None and ttb is not None and tts <= ttb:
+            print("smbc pdf row rejected (tts<=ttb)", ccy, cols[:4])
+            continue
+        entry = {}
+        if tts is not None:
+            entry["tts"] = tts
+        if ttb is not None:
+            entry["ttb"] = ttb
+        if entry:
+            rates[ccy] = entry
+            print("smbc pdf", ccy, "unit", unit, "->", entry)
+    return rates
+
+
 def get_smbc(out, errors):
     last = None
-    # 0) 公示相場PDF（日付入りURL）— まずは構造確認のためログのみ
-    ymd8 = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y%m%d")
-    for pdf_url in (
-        f"https://www.smbc.co.jp/market/backnumber/fixing/pdf_daily/now/fixing{ymd8}{ymd8}.pdf",
-    ):
+    # 0) 公示相場PDF（日付入りURL・IP制限なし）
+    jst = datetime.timezone(datetime.timedelta(hours=9))
+    for back in range(0, 6):
+        d = (datetime.datetime.now(jst) - datetime.timedelta(days=back)).strftime("%Y%m%d")
+        pdf_url = f"https://www.smbc.co.jp/market/backnumber/fixing/pdf_daily/now/fixing{d}{d}.pdf"
         try:
             raw = fetch(pdf_url, timeout=30)
-            print("--- smbc pdf", pdf_url, "bytes", len(raw), "magic", raw[:5])
-            if raw[:4] == b"%PDF":
-                text = pdf_text(raw)
-                print("smbc pdf text:")
-                for ln in text.splitlines():
-                    if ln.strip():
-                        print("  p|", ln[:130])
+            if raw[:4] != b"%PDF":
+                last = f"{pdf_url}: not a PDF"
+                continue
+            rates = parse_smbc_pdf(pdf_text(raw))
+            if len(rates) >= 3:
+                print("smbc via fixing pdf", d, sorted(rates))
+                out["smbc"] = rates
+                return
+            last = f"{pdf_url}: parsed {len(rates)}"
         except Exception as e:
-            print("smbc pdf fail", pdf_url, repr(e))
+            last = f"{pdf_url}: {e!r}"
+            print("smbc pdf fail", last)
     candidates = []
     # 実ブラウザでトップからリンク探索（SMBCのメニューはJSレンダリング）
     for top in ("https://www.smbc.co.jp/kojin/", "https://www.smbc.co.jp/"):
