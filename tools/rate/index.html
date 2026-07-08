@@ -4,24 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JPY為替レート確認・換算Webアプリ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
   <style>
+    .px-scene{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
+    .px-scene svg{width:100%;height:100%;display:block;image-rendering:pixelated}
+    .px-scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(253,252,248,.35),rgba(253,252,248,.12) 45%,rgba(253,252,248,.3))}
+    body>*:not(.px-scene){position:relative;z-index:1}
+
     :root {
-      --bg1: #f6f8fa;
-      --bg2: #f6f8fa;
-      --card: #ffffff;
+      --bg1: #fdfcf8;
+      --bg2: #fdfcf8;
+      --card: rgba(255,255,255,.93);
       --card-strong: #ffffff;
-      --text: #1f2328;
-      --subtext: #59636e;
-      --line: #d1d9e0;
-      --line-strong: #d1d9e0;
-      --accent: #0969da;
-      --accent-2: #0969da;
-      --accent-soft: #ddf4ff;
-      --success: #1f883d;
-      --shadow: 0 1px 0 rgba(31,35,40,.04);
-      --radius-xl: 12px;
-      --radius-lg: 10px;
-      --radius-md: 8px;
+      --text: #3a3352;
+      --subtext: #6d6685;
+      --line: #3a3352;
+      --line-strong: #3a3352;
+      --accent: #e0679d;
+      --accent-2: #e0679d;
+      --accent-soft: #fbe3ef;
+      --success: #3f9a50;
+      --shadow: 5px 5px 0 rgba(58,51,82,.18);
+      --radius-xl: 0px;
+      --radius-lg: 0px;
+      --radius-md: 0px;
+      --dot:"DotGothic16",monospace;
       color-scheme:light;
     }
 
@@ -545,31 +553,46 @@
       }
     }
 
-    /* --- Primer chrome + overrides --- */
-    .gh-header{background:#24292f;border-bottom:1px solid #1b1f24}
-    .gh-header .inner{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .gh-brand{display:flex;align-items:center;gap:9px;color:#fff;font-weight:600;font-size:15px;text-decoration:none}
-    .gh-brand:hover{opacity:.85}
-    .gh-mark{width:26px;height:26px}
-    .gh-crumb{color:rgba(255,255,255,.7);font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
-    .gh-crumb .sep{opacity:.55}
-    .gh-crumb a{color:rgba(255,255,255,.7);text-decoration:none}
-    .gh-crumb a:hover{color:#fff}
-    .gh-crumb .cur{color:#fff;font-weight:600}
+    /* --- sakura 8bit chrome + overrides --- */
+    .bar{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:3px solid var(--text);background:rgba(253,252,248,.78);flex-wrap:wrap}
+    .bar a{text-decoration:none}
+    .bar .logo{font-family:var(--dot);color:var(--accent);font-size:16px}
+    .bar .brand{font-family:var(--dot);font-size:15px;letter-spacing:1px;color:var(--text)}
+    .bar .crumb{font-family:var(--dot);font-size:12px;color:var(--subtext);display:flex;align-items:center;gap:8px;min-width:0}
+    .bar .crumb a{color:var(--subtext)}
+    .bar .crumb .cur{color:var(--text)}
     .page{padding-top:24px}
-    h1{font-size:24px !important;letter-spacing:-.01em}
-    .panel{backdrop-filter:none}
-    .badge{border-radius:2em}
-    button,.chip,input,select,.swap-button{border-radius:6px !important}
+    h1{font-family:var(--dot);font-size:26px !important;font-weight:400;letter-spacing:1px;text-shadow:2px 2px 0 var(--accent-soft)}
+    .section-head h2{font-family:var(--dot);font-weight:400;letter-spacing:1px}
+    .panel{backdrop-filter:none;border:3px solid var(--text);box-shadow:var(--shadow)}
+    .rate-card,.mini-card,.source-card,.result-card,.helper-card{border:2px solid var(--text);border-radius:0;box-shadow:3px 3px 0 rgba(58,51,82,.12)}
+    .badge{border-radius:0;border:2px solid var(--text)}
+    button,.chip,input,select,.swap-button{border-radius:0 !important;border:2px solid var(--text) !important}
+    .btn-primary{background:var(--success) !important;color:#fff;box-shadow:3px 3px 0 rgba(58,51,82,.2)}
+    .btn-secondary{background:#fff}
+    .status{border-radius:0}
   </style>
 </head>
 <body>
-<header class="gh-header">
-  <div class="inner">
-    <a class="gh-brand" href="../../"><svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Portal</a>
-    <span class="gh-crumb"><span class="sep">/</span><a href="../">ツール集</a><span class="sep">/</span><span class="cur">JPY為替レート</span></span>
-  </div>
-</header>
+<div class="px-scene" aria-hidden="true">
+  <svg viewBox="0 0 480 300" preserveAspectRatio="xMidYMax slice" shape-rendering="crispEdges">
+    <rect x="0" y="0" width="480" height="70" fill="#bfe2f5"/><rect x="0" y="70" width="480" height="55" fill="#cdeaf8"/>
+    <rect x="0" y="125" width="480" height="55" fill="#ddf1fa"/><rect x="0" y="180" width="480" height="40" fill="#eaf6fc"/>
+    <circle cx="404" cy="52" r="17" fill="#ffedb0"/>
+    <g fill="#ffffff"><rect x="140" y="46" width="44" height="7"/><rect x="152" y="39" width="24" height="7"/><rect x="300" y="70" width="36" height="7"/><rect x="308" y="63" width="20" height="7"/></g>
+    <polygon points="0,208 90,168 190,208 290,164 380,204 480,172 480,300 0,300" fill="#a9d9a4"/>
+    <polygon points="228,120 252,120 266,152 282,188 306,224 174,224 198,188 214,152" fill="#9aa6cf"/>
+    <polygon points="228,120 252,120 261,140 255,148 250,140 245,149 240,141 235,149 230,140 224,148 219,140" fill="#f6f8ff"/>
+    <polygon points="0,238 120,210 240,244 340,214 480,240 480,300 0,300" fill="#7fc283"/>
+    <g fill="#f5b5d2"><rect x="66" y="192" width="16" height="12"/><rect x="58" y="197" width="32" height="10"/></g><rect x="71" y="204" width="6" height="10" fill="#8a6a4a"/>
+    <g fill="#f8c6dc"><rect x="352" y="196" width="16" height="12"/><rect x="344" y="201" width="32" height="10"/></g><rect x="357" y="208" width="6" height="10" fill="#8a6a4a"/>
+  </svg>
+</div>
+<div class="bar">
+  <a class="logo" href="../../">✿</a>
+  <a class="brand" href="../../">PORTAL</a>
+  <span class="crumb">/ <a href="../">ツール集</a> / <span class="cur">JPY為替レート</span></span>
+</div>
   <div class="page">
     <section class="hero">
       <div class="panel hero-main">

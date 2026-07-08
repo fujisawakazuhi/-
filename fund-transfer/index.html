@@ -3,75 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>資金移動業関係 · Portal</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect x=%222%22 y=%222%22 width=%2228%22 height=%2228%22 rx=%228%22 fill=%22%2324292f%22/%3E%3Cpath d=%22M10 12 l5 4 -5 4 M17 20 h5%22 stroke=%22%23fff%22 stroke-width=%222.4%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
-<link rel="stylesheet" href="../assets/site.css">
+<title>資金移動業関係 · マイポータル</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23fdfcf8%22/%3E%3Cpolygon points=%2216,7 21,7 26,24 6,24 11,7%22 fill=%22%239aa6cf%22/%3E%3Cpolygon points=%2216,7 21,7 22.5,12 19,15 16,11 13,15 9.5,12 11,7%22 fill=%22%23f6f8ff%22/%3E%3Ccircle cx=%226%22 cy=%226%22 r=%223%22 fill=%22%23f78fbd%22/%3E%3Ccircle cx=%2227%22 cy=%2210%22 r=%222%22 fill=%22%23fba9cd%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/sakura.css">
 </head>
 <body>
 
-<header class="gh-header">
-  <div class="inner">
-    <a class="gh-brand" href="../">
-      <svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Portal
-    </a>
-    <span class="gh-crumb"><span class="sep">/</span><span class="cur">資金移動業関係</span></span>
-  </div>
-</header>
-
-<div class="page-head">
-  <div class="inner">
-    <h1><span class="title-emoji">💸</span>資金移動業関係</h1>
-    <p class="desc">資金移動業・資金決済まわりの情報をここにまとめています。</p>
-  </div>
+<div class="bar">
+  <a class="logo" href="../">✿</a>
+  <a class="brand" href="../">PORTAL</a>
+  <span class="crumb">/ <span class="cur">資金移動業関係</span></span>
+  <span class="lv">LV.1</span>
 </div>
 
-<main class="container">
-  <div class="card-grid">
+<main class="wrap">
+  <h1 class="page-title">💸 資金移動業関係</h1>
+  <p class="sub">資金移動業・資金決済まわりの情報をここにまとめています。</p>
+
+  <div class="grid">
 
     <a class="card" href="./daily-news/">
-      <div class="card-top">
-        <span class="card-icon">📰</span>
-        <span class="card-title">デイリーニュース</span>
-      </div>
-      <p class="card-desc">資金決済法・犯収法の改正動向、金融庁の公表資料、業界ニュース、海外送金・ステーブルコイン等の周辺動向を1日1ポストで記録。</p>
-      <div class="card-foot">
-        <span class="Label Label--success">● 運用中</span>
-        <span class="muted">newest first</span>
-      </div>
+      <div class="top"><span class="ico">📰</span><h2>デイリーニュース</h2></div>
+      <p>資金決済法・犯収法の改正動向、金融庁の公表資料、業界ニュース、海外送金・ステーブルコイン等の周辺動向を1日1ポストで記録。</p>
+      <span class="badge">▶ OPEN · 毎日更新</span>
     </a>
 
-    <div class="card disabled">
-      <div class="card-top">
-        <span class="card-icon">📚</span>
-        <span class="card-title muted">法令・制度メモ</span>
-      </div>
-      <p class="card-desc">資金決済法・関連ガイドラインの体系的な整理（予定）。</p>
-      <div class="card-foot">
-        <span class="Label Label--muted">準備中</span>
-      </div>
+    <div class="card">
+      <div class="top"><span class="ico">📚</span><h2 style="color:var(--muted)">法令・制度メモ</h2></div>
+      <p>資金決済法・関連ガイドラインの体系的な整理（予定）。</p>
+      <span class="badge wip">🔒 LOCKED</span>
     </div>
 
-    <div class="card disabled">
-      <div class="card-top">
-        <span class="card-icon">🔗</span>
-        <span class="card-title muted">資料・リンク集</span>
-      </div>
-      <p class="card-desc">官庁・業界団体・統計など、よく参照する一次情報へのリンク集（予定）。</p>
-      <div class="card-foot">
-        <span class="Label Label--muted">準備中</span>
-      </div>
+    <div class="card">
+      <div class="top"><span class="ico">🔗</span><h2 style="color:var(--muted)">資料・リンク集</h2></div>
+      <p>官庁・業界団体・統計など、よく参照する一次情報へのリンク集（予定）。</p>
+      <span class="badge wip">🔒 LOCKED</span>
     </div>
 
   </div>
 </main>
 
-<footer class="site-footer">
+<footer class="foot">
   <div class="inner">
     <span>個人的なメモです。正確な内容は必ず原典をご確認ください。</span>
-    <a href="../">← Portal</a>
+    <a href="../">← PORTAL</a>
   </div>
 </footer>
 
+<script src="../assets/scene.js" defer></script>
 </body>
 </html>
