@@ -46,10 +46,10 @@ body>*:not(.px-scene):not(.px-fg):not(.px-petal):not(.bar){position:relative;z-i
 
 /* ---- top bar ---- */
 .bar{
-  position:sticky;top:0;z-index:3;
+  position:sticky;top:0;z-index:10;
   display:flex;align-items:center;gap:12px;padding:14px 22px;
   border-bottom:3px solid var(--ink);
-  background:rgba(253,252,248,.78);backdrop-filter:blur(2px);
+  background:var(--paper);
   flex-wrap:wrap;
 }
 .bar .logo{font-family:var(--dot);color:var(--pink-deep);font-size:16px;text-decoration:none}
