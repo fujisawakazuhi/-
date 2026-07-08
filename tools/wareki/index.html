@@ -29,27 +29,41 @@
   .tool-card{background:rgba(255,255,255,.95);border:3px solid var(--ink);box-shadow:var(--hard);padding:20px;margin-top:20px}
   .tool-card h2{font-family:var(--dot);font-size:16px;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 
-  label.fld{display:block;font-size:.82rem;font-weight:700;color:var(--ink-soft);margin-bottom:6px}
-  input[type="date"],select,input[type="number"]{
-    font-family:inherit;font-size:1.05rem;color:var(--ink);background:#fff;
-    border:2px solid var(--line);padding:9px 12px;outline:none;
+  /* 変換方向タブ */
+  .tabs{display:flex;gap:0;margin-bottom:18px}
+  .tab{
+    flex:1;font-family:var(--dot);font-size:15px;letter-spacing:1px;cursor:pointer;
+    color:var(--ink);background:#fff;border:3px solid var(--ink);padding:12px 8px;
+  }
+  .tab+.tab{border-left:none}
+  .tab.active{background:var(--accent);color:#fff}
+  .tab:not(.active):hover{background:var(--accent-soft)}
+
+  select,input[type="number"]{
+    font-family:inherit;font-size:1.15rem;color:var(--ink);background:#fff;
+    border:2px solid var(--line);padding:10px 12px;outline:none;
   }
   input:focus-visible,select:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .row[hidden]{display:none}
   .row .grp{display:flex;flex-direction:column}
-  .row .grp span{font-size:.72rem;color:var(--ink-soft);margin-bottom:4px;font-weight:700}
-  input[type="number"]{width:88px}
+  .row .grp span{font-size:.74rem;color:var(--ink-soft);margin-bottom:4px;font-weight:700}
+  input[type="number"]{width:92px}
+  input[type="number"]#gYear{width:120px}
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type="number"]{-moz-appearance:textfield;appearance:textfield}
   .todaybtn{
     font-family:var(--dot);font-size:12px;letter-spacing:1px;cursor:pointer;
-    color:var(--ink);background:var(--green-soft);border:2px solid var(--ink);padding:9px 14px;
+    color:var(--ink);background:var(--green-soft);border:2px solid var(--ink);padding:11px 14px;
   }
   .todaybtn:hover{background:#c9ecc4}
 
   .result{margin-top:16px;display:none}
   .result.show{display:block}
   .big-answer{
-    font-family:var(--dot);font-size:26px;letter-spacing:1px;line-height:1.4;color:var(--ink);
-    background:var(--accent-soft);border:3px solid var(--ink);padding:14px 18px;
+    font-family:var(--dot);font-size:28px;letter-spacing:1px;line-height:1.4;color:var(--ink);
+    background:var(--accent-soft);border:3px solid var(--ink);padding:16px 18px;
     text-align:center;
   }
   .big-answer small{display:block;font-size:13px;color:var(--ink-soft);margin-top:4px;font-family:var(--sans)}
@@ -85,26 +99,22 @@
 
 <main class="wrap">
 
-  <!-- 西暦 → 和暦 -->
   <section class="tool-card">
-    <h2>🌸 西暦 → 和暦</h2>
-    <div class="row">
-      <div class="grp">
-        <span>日付</span>
-        <input type="date" id="gDate" min="1868-10-23" max="2099-12-31">
-      </div>
+    <div class="tabs">
+      <button type="button" class="tab active" id="tabG">西暦 → 和暦</button>
+      <button type="button" class="tab" id="tabW">和暦 → 西暦</button>
+    </div>
+
+    <!-- 西暦 → 和暦 -->
+    <div class="row" id="rowG">
+      <div class="grp"><span>西暦年</span><input type="number" id="gYear" min="1868" max="2199" inputmode="numeric"></div>
+      <div class="grp"><span>月（任意）</span><input type="number" id="gMonth" min="1" max="12" inputmode="numeric"></div>
+      <div class="grp"><span>日（任意）</span><input type="number" id="gDay" min="1" max="31" inputmode="numeric"></div>
       <button class="todaybtn" type="button" id="btnToday">きょう</button>
     </div>
-    <div class="result" id="gResult">
-      <div class="big-answer" id="gAnswer"></div>
-    </div>
-    <div class="err" id="gErr"></div>
-  </section>
 
-  <!-- 和暦 → 西暦 -->
-  <section class="tool-card">
-    <h2>🎌 和暦 → 西暦</h2>
-    <div class="row">
+    <!-- 和暦 → 西暦 -->
+    <div class="row" id="rowW" hidden>
       <div class="grp">
         <span>元号</span>
         <select id="wEra">
@@ -115,15 +125,17 @@
           <option value="meiji">明治</option>
         </select>
       </div>
-      <div class="grp"><span>年</span><input type="number" id="wYear" min="1" max="99"></div>
-      <div class="grp"><span>月（任意）</span><input type="number" id="wMonth" min="1" max="12"></div>
-      <div class="grp"><span>日（任意）</span><input type="number" id="wDay" min="1" max="31"></div>
+      <div class="grp"><span>年</span><input type="number" id="wYear" min="1" max="99" inputmode="numeric"></div>
+      <div class="grp"><span>月（任意）</span><input type="number" id="wMonth" min="1" max="12" inputmode="numeric"></div>
+      <div class="grp"><span>日（任意）</span><input type="number" id="wDay" min="1" max="31" inputmode="numeric"></div>
+      <button class="todaybtn" type="button" id="btnTodayW">きょう</button>
     </div>
-    <div class="result" id="wResult">
-      <div class="big-answer" id="wAnswer"></div>
+
+    <div class="result" id="result">
+      <div class="big-answer" id="answer"></div>
     </div>
-    <div class="warn" id="wWarn"></div>
-    <div class="err" id="wErr"></div>
+    <div class="warn" id="warn"></div>
+    <div class="err" id="err"></div>
   </section>
 
   <!-- 早見表 -->
@@ -163,16 +175,15 @@ var ERAS={
 };
 var ORDER=["reiwa","heisei","showa","taisho","meiji"];
 var WD=["日","月","火","水","木","金","土"];
+var mode="G";
 
 function jpYear(n){return n===1?"元":String(n)}
 function utc(y,m,d){return Date.UTC(y,m-1,d)}
-
 function toWareki(t){
   for(var i=0;i<ORDER.length;i++){
     var e=ERAS[ORDER[i]];
     if(t>=e.start && (e.end===null||t<=e.end)){
-      var y=new Date(t).getUTCFullYear()-e.base;
-      return {era:e.name,year:y};
+      return {era:e.name,year:new Date(t).getUTCFullYear()-e.base};
     }
   }
   return null;
@@ -181,72 +192,125 @@ function fmtDate(t){
   var d=new Date(t);
   return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),wd:WD[d.getUTCDay()]};
 }
+function show(ans,sub){$("answer").innerHTML=ans+(sub?"<small>"+sub+"</small>":"");$("result").classList.add("show")}
+function showWarn(t){$("warn").textContent=t;$("warn").classList.add("show")}
+function showErr(t){$("err").textContent=t;$("err").classList.add("show")}
+function clearOut(){
+  $("result").classList.remove("show");
+  $("warn").classList.remove("show");
+  $("err").classList.remove("show");
+}
+function validDate(gy,m,d){
+  var dim=new Date(Date.UTC(gy,m,0)).getUTCDate();
+  return m>=1&&m<=12&&d>=1&&d<=dim?true:dim;
+}
+
 /* ---- 西暦 → 和暦 ---- */
 function runG(){
-  var v=$("gDate").value;
-  var res=$("gResult"),err=$("gErr");
-  res.classList.remove("show");err.classList.remove("show");
-  if(!v)return;
-  var p=v.split("-"),t=utc(+p[0],+p[1],+p[2]);
-  var w=toWareki(t);
-  if(!w){err.textContent="明治元年（1868年10月23日）以降の日付を入力してください。";err.classList.add("show");return}
-  var f=fmtDate(t);
-  $("gAnswer").innerHTML=w.era+jpYear(w.year)+"年"+f.m+"月"+f.d+"日（"+f.wd+"）"
-    +"<small>"+f.y+"年"+f.m+"月"+f.d+"日</small>";
-  res.classList.add("show");
+  clearOut();
+  var yv=$("gYear").value,mv=$("gMonth").value,dv=$("gDay").value;
+  if(!yv)return;
+  var y=+yv;
+  if(yv.length<4||y<1868||y>2199){
+    if(yv.length>=4)showErr("1868年（明治元年）〜2199年の範囲で入力してください。");
+    return;
+  }
+  if(mv&&dv){
+    var m=+mv,d=+dv;
+    var v=validDate(y,m,d);
+    if(v!==true){
+      showErr("存在しない日付です（"+y+"年"+m+"月は"+(m>=1&&m<=12?v+"日まで":"ありません")+"）。");
+      return;
+    }
+    var t=utc(y,m,d);
+    var w=toWareki(t);
+    if(!w){showErr("和暦は明治元年（1868年10月23日）からです。");return}
+    var f=fmtDate(t);
+    show(w.era+jpYear(w.year)+"年"+f.m+"月"+f.d+"日（"+f.wd+"）",y+"年"+m+"月"+d+"日");
+  }else{
+    // 年のみ（または年+月）→ 年末時点の元号を表示。境界年は注意書き。
+    var t2=utc(y,12,31);
+    var w2=toWareki(t2);
+    if(!w2){showErr("和暦は明治元年（1868年10月23日）からです。");return}
+    show(w2.era+jpYear(y-(ERAS[keyOf(w2.era)].base))+"年",y+"年");
+    var w1=toWareki(utc(y,1,1));
+    if(w1&&w1.era!==w2.era){
+      var oldE=ERAS[keyOf(w1.era)],newE=ERAS[keyOf(w2.era)];
+      var oe=fmtDate(oldE.end),ns=fmtDate(newE.start);
+      showWarn("※ "+y+"年は"+oe.m+"月"+oe.d+"日まで"+w1.era+jpYear(w1.year)+"年、"+ns.m+"月"+ns.d+"日から"+w2.era+jpYear(y-newE.base)+"年です。");
+    }
+  }
+}
+function keyOf(name){
+  for(var k in ERAS)if(ERAS[k].name===name)return k;
 }
 
 /* ---- 和暦 → 西暦 ---- */
 function runW(){
+  clearOut();
   var key=$("wEra").value,e=ERAS[key];
   var yv=$("wYear").value,mv=$("wMonth").value,dv=$("wDay").value;
-  var res=$("wResult"),warn=$("wWarn"),err=$("wErr");
-  res.classList.remove("show");warn.classList.remove("show");err.classList.remove("show");
   if(!yv)return;
   var y=+yv;
   var maxY=e.end?new Date(e.end).getUTCFullYear()-e.base:99;
   if(y<1||y>maxY){
-    err.textContent=e.name+"は"+e.name+"元年〜"+e.name+maxY+"年までです。";
-    err.classList.add("show");return;
+    showErr(e.name+"は"+e.name+"元年〜"+e.name+maxY+"年までです。");
+    return;
   }
   var gy=e.base+y;
   if(mv&&dv){
     var m=+mv,d=+dv;
-    var dim=new Date(Date.UTC(gy,m,0)).getUTCDate();
-    if(m<1||m>12||d<1||d>dim){
-      err.textContent="存在しない日付です（"+gy+"年"+m+"月は"+(m>=1&&m<=12?dim+"日まで":"ありません")+"）。";
-      err.classList.add("show");return;
+    var v=validDate(gy,m,d);
+    if(v!==true){
+      showErr("存在しない日付です（"+gy+"年"+m+"月は"+(m>=1&&m<=12?v+"日まで":"ありません")+"）。");
+      return;
     }
     var t=utc(gy,m,d);
-    var actual=toWareki(t);
     var f=fmtDate(t);
-    $("wAnswer").innerHTML=f.y+"年"+f.m+"月"+f.d+"日（"+f.wd+"）"
-      +"<small>"+e.name+jpYear(y)+"年"+m+"月"+d+"日</small>";
-    if(actual&&(actual.era!==e.name)){
-      warn.textContent="⚠ この日は正しくは「"+actual.era+jpYear(actual.year)+"年"+m+"月"+d+"日」です（"+e.name+"の期間外）。";
-      warn.classList.add("show");
+    show(f.y+"年"+f.m+"月"+f.d+"日（"+f.wd+"）",e.name+jpYear(y)+"年"+m+"月"+d+"日");
+    var actual=toWareki(t);
+    if(actual&&actual.era!==e.name){
+      showWarn("⚠ この日は正しくは「"+actual.era+jpYear(actual.year)+"年"+m+"月"+d+"日」です（"+e.name+"の期間外）。");
     }
   }else{
-    $("wAnswer").innerHTML=gy+"年<small>"+e.name+jpYear(y)+"年</small>";
+    show(gy+"年",e.name+jpYear(y)+"年");
   }
-  res.classList.add("show");
 }
 
-function setToday(){
-  var n=new Date();
-  var mm=("0"+(n.getMonth()+1)).slice(-2),dd=("0"+n.getDate()).slice(-2);
-  $("gDate").value=n.getFullYear()+"-"+mm+"-"+dd;
+/* ---- タブ切り替え ---- */
+function setMode(m){
+  mode=m;
+  $("tabG").classList.toggle("active",m==="G");
+  $("tabW").classList.toggle("active",m==="W");
+  $("rowG").hidden=m!=="G";
+  $("rowW").hidden=m!=="W";
+  clearOut();
+  if(m==="G")runG();else runW();
+}
+$("tabG").addEventListener("click",function(){setMode("G")});
+$("tabW").addEventListener("click",function(){setMode("W")});
+
+/* ---- きょう ---- */
+function today(){var n=new Date();return {y:n.getFullYear(),m:n.getMonth()+1,d:n.getDate()}}
+$("btnToday").addEventListener("click",function(){
+  var t=today();
+  $("gYear").value=t.y;$("gMonth").value=t.m;$("gDay").value=t.d;
   runG();
-}
+});
+$("btnTodayW").addEventListener("click",function(){
+  var t=today();
+  var w=toWareki(utc(t.y,t.m,t.d));
+  $("wEra").value=keyOf(w.era);$("wYear").value=w.year;$("wMonth").value=t.m;$("wDay").value=t.d;
+  runW();
+});
 
-$("gDate").addEventListener("change",runG);
-$("gDate").addEventListener("input",runG);
-$("btnToday").addEventListener("click",setToday);
+["gYear","gMonth","gDay"].forEach(function(id){
+  $(id).addEventListener("input",runG);
+});
 ["wEra","wYear","wMonth","wDay"].forEach(function(id){
   $(id).addEventListener("input",runW);
   $(id).addEventListener("change",runW);
 });
-setToday();
 })();
 </script>
 <script src="../../assets/scene.js" defer></script>
