@@ -1,0 +1,6 @@
+{
+ "updated": "初回取得前",
+ "currencies": ["USD", "EUR", "GBP", "CNY", "TWD", "KRW", "VND"],
+ "banks": {},
+ "errors": {}
+}
