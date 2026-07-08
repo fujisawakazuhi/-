@@ -96,7 +96,8 @@ def parse_reg_xlsx(raw):
             name = next((rec[k] for k in rec if ("名" in k and "法人" not in k) and rec[k]), "")
             for k in ("所管", "業務の種別"):
                 if rec.get(k):
-                    cur[k] = re.sub(r"【[^】]*】", "", rec[k]).strip()
+                    rec[k] = re.sub(r"【[^】]*】", "", rec[k]).strip()
+                    cur[k] = rec[k]
             if not no and not name:
                 continue  # 種別見出し行など
             for k in ("所管", "業務の種別"):
@@ -209,13 +210,27 @@ def get_shobun(stamp, errors):
         try:
             html = decode_jp(fetch(top))
             list_pages.append((top, html))
-            for u, t in links_of(html, top):
-                if re.search(r"(令和|平成)\s*\d+年度", t) and "/news/" in u:
-                    list_pages.append((u, None))
+            all_links = links_of(html, top)
+            print("shobun index links dump:")
+            for u, t in all_links[:50]:
+                print("   L|", t[:40], "|", u[:90])
+            for u, t in all_links:
+                if (re.search(r"(令和|平成)\s*\d+年度", t) or re.search(r"/news/r?\d+", u)) and u.endswith((".html", "/")):
+                    if u not in [p for p, _ in list_pages]:
+                        list_pages.append((u, None))
             break
         except Exception as e:
             print("shobun news index fail", top, repr(e))
-    print("shobun list pages:", [(u, "") for u, _ in list_pages][:8])
+    # RSS候補もプローブ
+    for rss in (BASE + "/fsaRss/fsa_news.rdf", BASE + "/rss/fsa_news.rdf", BASE + "/news/fsa_news.rdf"):
+        try:
+            raw = fetch(rss, timeout=20)
+            print("shobun RSS OK", rss, "bytes", len(raw))
+            print("  rss head:", decode_jp(raw)[:300].replace("\n", " "))
+            list_pages.append((rss, decode_jp(raw)))
+        except Exception as e:
+            print("shobun RSS fail", rss, repr(e))
+    print("shobun list pages:", [u for u, _ in list_pages][:8])
 
     items = []
     seen_pages = set()
@@ -230,6 +245,24 @@ def get_shobun(stamp, errors):
                 print("shobun list fail", url, repr(e))
                 continue
         print("--- shobun list", url, "len", len(html))
+        # RSS/RDF形式
+        if "<item" in html:
+            for im in re.finditer(r"<item[^>]*>(.*?)</item>", html, flags=re.S):
+                blk = im.group(1)
+                tm = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", blk, flags=re.S)
+                lk = re.search(r"<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</link>", blk, flags=re.S)
+                dt = re.search(r"<(?:dc:date|pubDate)>(.*?)</", blk, flags=re.S)
+                if not tm or not lk:
+                    continue
+                title = " ".join(tm.group(1).split())
+                if not re.search(r"行政処分|業務停止|業務改善|登録の取消|登録取消", title):
+                    continue
+                if not any(k in title for k in SHOBUN_KEYWORDS):
+                    print("shobun near-miss(rss):", title[:80])
+                    continue
+                items.append({"date": (dt.group(1).strip()[:10] if dt else ""),
+                              "title": title[:140], "url": lk.group(1).strip()})
+            continue
         # 行単位（tr / li / dd）で日付・リンク・タイトルを抽出
         blocks = re.split(r"<(?:tr|li|dt)[^>]*>", html)
         near_miss = 0
