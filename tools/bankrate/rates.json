@@ -1,6 +1,6 @@
 {
- "updated": "2026-07-08 17:25",
- "updated_iso": "2026-07-08T17:25:18.914391+09:00",
+ "updated": "2026-07-08 17:30",
+ "updated_iso": "2026-07-08T17:30:13.159235+09:00",
  "currencies": [
   "USD",
   "EUR",
@@ -34,12 +34,53 @@
      "ttb": 0.1051
     }
    },
-   "fetched": "2026-07-08 17:25"
+   "fetched": "2026-07-08 17:30"
+  },
+  "smbc": {
+   "rates": {
+    "USD": {
+     "tts": 162.27,
+     "ttb": 161.77
+    },
+    "EUR": {
+     "tts": 185.42,
+     "ttb": 184.72
+    },
+    "GBP": {
+     "tts": 216.92,
+     "ttb": 214.92
+    }
+   },
+   "fetched": "2026-07-08 17:30"
+  },
+  "wise": {
+   "rates": {
+    "USD": {
+     "mid": 162.10082671421625
+    },
+    "EUR": {
+     "mid": 185.08236165093467
+    },
+    "GBP": {
+     "mid": 216.6377816291161
+    },
+    "CNY": {
+     "mid": 23.837334032561795
+    },
+    "TWD": {
+     "mid": 5.045408678102927
+    },
+    "KRW": {
+     "mid": 0.10673315430625584
+    },
+    "VND": {
+     "mid": 0.006183842470521252
+    }
+   },
+   "fetched": "2026-07-08 17:30"
   }
  },
  "errors": {
-  "mizuho": "https://www.mizuhobank.co.jp/market/quote.csv: <HTTPError 403: 'Forbidden'>",
-  "smbc": "https://www.smbc.co.jp/kojin/soukin/kawase.html: <HTTPError 404: 'Not Found'>",
-  "wise": "converter VND: <HTTPError 403: 'Forbidden'>"
+  "mizuho": "https://www.mizuhobank.co.jp/market/index.html: browser parsed 0 rows"
  }
 }
