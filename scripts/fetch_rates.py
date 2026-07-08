@@ -249,8 +249,9 @@ def get_mizuho(out, errors):
         try:
             text = fetch(url, timeout=60).decode("utf-8", errors="replace")
             print("--- mizuho via reader", target, "len", len(text))
-            for ln in text.splitlines()[:70]:
-                print("  |", ln[:120])
+            for ln in text.splitlines():
+                if ln.strip():
+                    print("  |", ln[:130])
             rates = parse_mizuho_text(text)
             if len(rates) >= 2:
                 print("mizuho via reader parsed:", rates)
