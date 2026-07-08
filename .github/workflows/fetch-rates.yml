@@ -25,7 +25,7 @@ jobs:
 
       - name: Install Playwright
         run: |
-          pip install --quiet playwright
+          pip install --quiet playwright pypdf
           python3 -m playwright install --with-deps chromium
 
       - name: Fetch rates

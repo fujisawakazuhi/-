@@ -169,8 +169,58 @@ def rows_from_html(text):
     return [re.sub(r"<[^>]+>", " ", r) for r in re.split(r"<tr[^>]*>", text)]
 
 
+def pdf_text(raw):
+    import io
+    from pypdf import PdfReader
+    r = PdfReader(io.BytesIO(raw))
+    return "\n".join((p.extract_text() or "") for p in r.pages)
+
+
 def get_mizuho(out, errors):
     last = None
+    # 0) 公表PDF（日付入りURLが予測可能）
+    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+    ymd = today.strftime("%y%m%d")
+    pdf_urls = [
+        f"https://www.mizuhobank.co.jp/market/historical/backnumber_b/pdf/fx-quotation{ymd}.pdf",
+        "https://www.mizuhobank.co.jp/market/pdf/fx-quotation.pdf",
+        "https://www.mizuhobank.co.jp/market/pdf/relatedrate.pdf",
+    ]
+    for url in pdf_urls:
+        try:
+            raw = fetch(url, referer="https://www.mizuhobank.co.jp/market/index.html")
+            print("--- mizuho pdf", url, "bytes", len(raw), "magic", raw[:5])
+            if raw[:4] != b"%PDF":
+                last = f"{url}: not a PDF"
+                continue
+            text = pdf_text(raw)
+            print("mizuho pdf text head:")
+            for ln in text.splitlines()[:30]:
+                print("  |", ln[:110])
+            # 行ごとに全数値をログ（TTS/ACC/TTBの並び確認用）
+            rates = {}
+            for line in text.splitlines():
+                line = " ".join(line.replace(",", " ").split())
+                ccy, tail = ccy_of(line)
+                if not ccy or ccy in rates:
+                    continue
+                nums = floats_in(tail)
+                print("mizuho pdf row", ccy, nums[:6], "raw:", line[:110])
+                cand = [normalize(ccy, v) for v in nums]
+                cand = [v for v in cand if v is not None]
+                if len(cand) >= 3 and cand[0] > cand[2]:
+                    # 想定列: T.T.S / ACC / T.T.B（要ログ確認）
+                    rates[ccy] = {"tts": cand[0], "ttb": cand[2]}
+                elif len(cand) >= 2 and cand[0] != cand[1]:
+                    rates[ccy] = {"tts": max(cand[0], cand[1]), "ttb": min(cand[0], cand[1])}
+            if rates:
+                print("mizuho pdf parsed:", rates)
+                out["mizuho"] = rates
+                return
+            last = f"{url}: pdf parsed 0 rows"
+        except Exception as e:
+            last = f"{url}: {e!r}"
+            print("mizuho pdf fail", last)
     # 1) 素のHTTP（速い）
     for url in (
         "https://www.mizuhobank.co.jp/market/csv/quote.csv",
