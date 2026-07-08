@@ -3,38 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日記</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Cpath d=%22M50 8 L92 42 V88 a4 4 0 0 1 -4 4 H62 V64 H38 V92 H12 a4 4 0 0 1 -4-4 V42 Z%22 fill=%22%230f6660%22/%3E%3C/svg%3E">
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
-    background:#eef1f2;color:#17222c;line-height:1.6;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:24px;
-  }
-  .card{
-    background:#fff;border:1px solid #e2e7e9;border-radius:22px;
-    padding:44px 40px;max-width:460px;width:100%;text-align:center;
-    box-shadow:0 1px 2px rgba(15,40,38,.05),0 18px 44px -20px rgba(15,60,55,.25);
-  }
-  .emoji{font-size:2.4rem}
-  h1{font-size:1.4rem;font-weight:800;margin-top:12px}
-  p{margin-top:10px;font-size:.86rem;color:#63707b}
-  a{
-    display:inline-block;margin-top:22px;font-size:.86rem;font-weight:700;color:#fff;
-    text-decoration:none;border-radius:999px;padding:10px 26px;
-    background:linear-gradient(135deg,#17a294,#0f6660);
-    box-shadow:0 8px 20px -8px rgba(15,102,96,.55);
-  }
-</style>
+<title>日記 · Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect x=%222%22 y=%222%22 width=%2228%22 height=%2228%22 rx=%228%22 fill=%22%2324292f%22/%3E%3Cpath d=%22M10 12 l5 4 -5 4 M17 20 h5%22 stroke=%22%23fff%22 stroke-width=%222.4%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
-  <div class="card">
-    <div class="emoji">📓</div>
-    <h1>日記</h1>
-    <p>このセクションは準備中です。<br>コンテンツは順次追加していきます。</p>
-    <a href="../">← ポータルにもどる</a>
+
+<header class="gh-header">
+  <div class="inner">
+    <a class="gh-brand" href="../">
+      <svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Portal
+    </a>
+    <span class="gh-crumb"><span class="sep">/</span><span class="cur">日記</span></span>
   </div>
+</header>
+
+<main class="container container-narrow">
+  <a class="backlink" href="../">← Portal にもどる</a>
+  <div class="Box">
+    <div class="Box-row" style="text-align:center;padding:48px 24px">
+      <div style="font-size:34px">📓</div>
+      <h1 style="font-size:20px;font-weight:600;margin-top:10px">日記</h1>
+      <p class="muted" style="margin-top:8px">このセクションは準備中です。コンテンツは順次追加していきます。</p>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="inner"><span>個人用ポータル</span><a href="../">← Portal</a></div>
+</footer>
+
 </body>
 </html>

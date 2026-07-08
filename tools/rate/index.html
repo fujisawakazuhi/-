@@ -6,22 +6,23 @@
   <title>JPY為替レート確認・換算Webアプリ</title>
   <style>
     :root {
-      --bg1: #f5f7ff;
-      --bg2: #eef7ff;
-      --card: rgba(255, 255, 255, 0.88);
+      --bg1: #f6f8fa;
+      --bg2: #f6f8fa;
+      --card: #ffffff;
       --card-strong: #ffffff;
-      --text: #132238;
-      --subtext: #58708d;
-      --line: rgba(64, 101, 147, 0.16);
-      --line-strong: rgba(64, 101, 147, 0.24);
-      --accent: #2f6fed;
-      --accent-2: #13b7d3;
-      --accent-soft: rgba(47, 111, 237, 0.10);
-      --success: #0f9d6c;
-      --shadow: 0 18px 40px rgba(22, 45, 79, 0.10);
-      --radius-xl: 28px;
-      --radius-lg: 20px;
-      --radius-md: 16px;
+      --text: #1f2328;
+      --subtext: #59636e;
+      --line: #d1d9e0;
+      --line-strong: #d1d9e0;
+      --accent: #0969da;
+      --accent-2: #0969da;
+      --accent-soft: #ddf4ff;
+      --success: #1f883d;
+      --shadow: 0 1px 0 rgba(31,35,40,.04);
+      --radius-xl: 12px;
+      --radius-lg: 10px;
+      --radius-md: 8px;
+      color-scheme:light;
     }
 
     * { box-sizing: border-box; }
@@ -30,10 +31,7 @@
       margin: 0;
       font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(circle at top right, rgba(19, 183, 211, 0.14), transparent 28%),
-        radial-gradient(circle at top left, rgba(47, 111, 237, 0.14), transparent 34%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
+      background: var(--bg1);
       min-height: 100vh;
     }
 
@@ -131,7 +129,7 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      background: var(--success);
       color: #fff;
       font-weight: 700;
       box-shadow: 0 10px 24px rgba(47, 111, 237, 0.26);
@@ -546,11 +544,33 @@
         padding-right: 84px;
       }
     }
+
+    /* --- Primer chrome + overrides --- */
+    .gh-header{background:#24292f;border-bottom:1px solid #1b1f24}
+    .gh-header .inner{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .gh-brand{display:flex;align-items:center;gap:9px;color:#fff;font-weight:600;font-size:15px;text-decoration:none}
+    .gh-brand:hover{opacity:.85}
+    .gh-mark{width:26px;height:26px}
+    .gh-crumb{color:rgba(255,255,255,.7);font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
+    .gh-crumb .sep{opacity:.55}
+    .gh-crumb a{color:rgba(255,255,255,.7);text-decoration:none}
+    .gh-crumb a:hover{color:#fff}
+    .gh-crumb .cur{color:#fff;font-weight:600}
+    .page{padding-top:24px}
+    h1{font-size:24px !important;letter-spacing:-.01em}
+    .panel{backdrop-filter:none}
+    .badge{border-radius:2em}
+    button,.chip,input,select,.swap-button{border-radius:6px !important}
   </style>
 </head>
 <body>
+<header class="gh-header">
+  <div class="inner">
+    <a class="gh-brand" href="../../"><svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Portal</a>
+    <span class="gh-crumb"><span class="sep">/</span><a href="../">ツール集</a><span class="sep">/</span><span class="cur">JPY為替レート</span></span>
+  </div>
+</header>
   <div class="page">
-    <a href="../" style="display:inline-block;margin-bottom:14px;font-size:13px;font-weight:700;color:var(--subtext);text-decoration:none">← ツール集にもどる</a>
     <section class="hero">
       <div class="panel hero-main">
         <div class="badge-row">

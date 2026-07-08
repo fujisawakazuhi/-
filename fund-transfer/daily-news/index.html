@@ -3,83 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>資金移動業デイリーニュース</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2244%22 fill=%22%230f6660%22/%3E%3Cpath d=%22M30 38 h40 M30 52 h40 M30 66 h26%22 stroke=%22%23fff%22 stroke-width=%228%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
+<title>資金移動業デイリーニュース · Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect x=%222%22 y=%222%22 width=%2228%22 height=%2228%22 rx=%228%22 fill=%22%2324292f%22/%3E%3Cpath d=%22M10 12 l5 4 -5 4 M17 20 h5%22 stroke=%22%23fff%22 stroke-width=%222.4%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../../assets/site.css">
 <style>
-  :root{
-    --bg:#eef1f2; --ink:#17222c; --ink-soft:#63707b;
-    --card:#fff; --line:#e2e7e9;
-    --teal:#0f6660; --teal-2:#17a294; --teal-soft:#e2f1ef;
-    --shadow:0 1px 2px rgba(15,40,38,.05),0 14px 36px -18px rgba(15,60,55,.22);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{-webkit-text-size-adjust:100%}
-  body{
-    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
-    background:var(--bg);color:var(--ink);line-height:1.75;
-  }
-  .wrap{max-width:680px;margin:0 auto;padding:0 18px}
-
-  header{
-    background:linear-gradient(135deg,#0b2f2c 0%,#0f4c47 55%,#15655d 100%);
-    color:#fff;padding:24px 0 28px;position:relative;overflow:hidden;
-  }
-  header::before{
-    content:"";position:absolute;width:380px;height:380px;border-radius:50%;
-    right:-130px;top:-170px;pointer-events:none;
-    background:radial-gradient(circle,rgba(255,255,255,.13),transparent 65%);
-  }
-  header .wrap{position:relative}
-  .back{
-    display:inline-block;font-size:.8rem;font-weight:600;text-decoration:none;
-    color:rgba(255,255,255,.75);margin-bottom:12px;
-  }
-  .back:hover{color:#fff}
-  h1{font-size:1.5rem;font-weight:800;letter-spacing:.03em;line-height:1.25}
-  h1 small{display:block;font-size:.76rem;font-weight:500;color:rgba(255,255,255,.72);letter-spacing:.08em;margin-top:4px}
-
-  main{padding:26px 0 70px}
   .feed{display:flex;flex-direction:column;gap:16px}
-
-  .post{
-    background:var(--card);border:1px solid var(--line);border-radius:18px;
-    padding:18px 20px 16px;box-shadow:var(--shadow);
-  }
-  .post-head{
-    padding-bottom:12px;border-bottom:1px solid var(--line);
-  }
-  .post-head time{
-    font-size:1.3rem;font-weight:800;color:var(--ink);
-    letter-spacing:.02em;line-height:1.2;
-  }
-  .post-body{margin-top:14px;font-size:.9rem}
-  .post-body p{margin-top:8px}
+  .post{background:var(--canvas);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-small)}
+  .post-head{padding:10px 16px;border-bottom:1px solid var(--border);background:var(--canvas-subtle);border-radius:var(--radius) var(--radius) 0 0}
+  .post-head time{font-size:14px;font-weight:600;color:var(--fg)}
+  .post-body{padding:16px;font-size:14px;line-height:1.65}
+  .post-body p{margin-top:10px}
   .post-body p:first-child{margin-top:0}
   .post-body ul{margin:8px 0 0 1.3em}
-  .post-body a{color:var(--teal);font-weight:600;word-break:break-all}
-  .post-body b{color:var(--ink)}
-  .post-body .news-text{display:block;margin-top:2px;padding-left:1.2em}
-  .post-tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
-  .post-tags span{
-    font-size:.72rem;font-weight:700;color:var(--teal);
-    background:var(--teal-soft);border-radius:999px;padding:3px 12px;
-  }
-
-  footer{border-top:1px solid var(--line);padding:18px 0 26px;font-size:.74rem;color:var(--ink-soft)}
+  .post-body a{color:var(--accent-fg);font-weight:500;word-break:break-all}
+  .post-body b{color:var(--fg);font-weight:600}
+  .post-body .news-text{display:block;margin-top:2px;padding-left:1.2em;color:var(--fg-muted)}
+  .post-tags{padding:0 16px 14px;display:flex;flex-wrap:wrap;gap:6px}
+  .post-tags span{font-size:12px;font-weight:500;color:var(--fg-muted);background:var(--neutral-muted);border-radius:999px;padding:2px 10px}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <a class="back" href="../">← 資金移動業トップにもどる</a>
-    <h1>資金移動業デイリーニュース<small>資金決済・送金ビジネスまわりの動きを毎日メモ</small></h1>
+<header class="gh-header">
+  <div class="inner">
+    <a class="gh-brand" href="../../">
+      <svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Portal
+    </a>
+    <span class="gh-crumb"><span class="sep">/</span><a href="../">資金移動業関係</a><span class="sep">/</span><span class="cur">デイリーニュース</span></span>
   </div>
 </header>
 
-<main>
-  <div class="wrap">
-    <div class="feed">
+<div class="page-head">
+  <div class="inner">
+    <h1><span class="title-emoji">📰</span>資金移動業デイリーニュース</h1>
+    <p class="desc">資金決済・送金ビジネスまわりの動きを毎日メモ。新しい投稿が上に表示されます。</p>
+  </div>
+</div>
+
+<main class="container container-narrow">
+  <div class="feed">
 <!-- ▼▼▼ 新しい投稿はこのマーカーの直下に追加する（新しいものが上） ▼▼▼ -->
 
       <article class="post">
@@ -149,13 +112,13 @@
         </div>
       </article>
 
-    </div>
   </div>
 </main>
 
-<footer>
-  <div class="wrap">
-    個人的なメモです。正確な内容は必ず原典（官報・金融庁公表資料等）をご確認ください。
+<footer class="site-footer">
+  <div class="inner">
+    <span>個人的なメモです。正確な内容は必ず原典（官報・金融庁公表資料等）をご確認ください。</span>
+    <a href="../">← 資金移動業関係</a>
   </div>
 </footer>
 

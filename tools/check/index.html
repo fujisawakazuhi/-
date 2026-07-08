@@ -7,48 +7,40 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Cpath d=%22M50 4 L90 18 V52 C90 76 72 90 50 97 C28 90 10 76 10 52 V18 Z%22 fill=%22%2316635f%22/%3E%3Cpath d=%22M30 50 L44 64 L72 35%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%2211%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
 <style>
   :root{
-    --bg:#eef1f2; --ink:#17222c; --ink-soft:#63707b;
-    --paper:#eef1f2; --card:#fff; --line:#e2e7e9;
-    --red:#c4321f; --red-soft:#fbeae7;
-    --teal:#0f6660; --teal-2:#17a294; --teal-soft:#e2f1ef;
-    --gray-soft:#e9edee;
-    --shadow:0 1px 2px rgba(15,40,38,.05),0 16px 40px -20px rgba(15,60,55,.22);
-    --mono:ui-monospace,Consolas,monospace;
+    --bg:#f6f8fa; --ink:#1f2328; --ink-soft:#59636e;
+    --paper:#f6f8fa; --card:#ffffff; --line:#d1d9e0;
+    --red:#cf222e; --red-soft:#ffebe9;
+    --teal:#0969da; --teal-2:#0969da; --teal-soft:#ddf4ff;
+    --green:#1f883d; --green-hover:#1a7f37;
+    --amber:#9a6700; --amber-soft:#fff8c5;
+    --gray-soft:#eaeef2;
+    --shadow:0 1px 0 rgba(31,35,40,.04);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:light;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%}
   body{
-    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,Helvetica,Arial,sans-serif;
     background:var(--bg);color:var(--ink);line-height:1.6;padding-bottom:70px;
   }
   .wrap{max-width:1020px;margin:0 auto;padding:0 22px}
 
-  header{
-    background:linear-gradient(135deg,#0b2f2c 0%,#0f4c47 55%,#15655d 100%);
-    color:#fff;padding:26px 0 34px;position:relative;overflow:hidden;
-  }
-  header::before{
-    content:"";position:absolute;width:420px;height:420px;border-radius:50%;
-    right:-130px;top:-190px;pointer-events:none;
-    background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%);
-  }
-  header .wrap{position:relative}
-  .back{
-    display:inline-block;font-size:.8rem;font-weight:600;text-decoration:none;
-    color:rgba(255,255,255,.75);margin-bottom:14px;transition:color .15s;
-  }
-  .back:hover{color:#fff}
-  .head-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-  h1{font-size:1.9rem;font-weight:800;letter-spacing:.03em;line-height:1.2;color:#fff}
-  h1 small{display:block;font-size:.78rem;font-weight:500;color:rgba(255,255,255,.72);letter-spacing:.1em;margin-top:4px}
-  .local-badge{
-    margin-left:auto;font-weight:700;font-size:.92rem;color:#fff;
-    border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);
-    border-radius:12px;padding:9px 18px;white-space:nowrap;text-align:center;
-    backdrop-filter:blur(6px);
-  }
-  .local-badge .main::before{content:"✓ ";font-size:1rem}
-  .local-badge .sub{display:block;font-size:.68rem;font-weight:500;margin-top:2px;color:rgba(255,255,255,.78)}
+  .gh-header{background:#24292f;border-bottom:1px solid #1b1f24}
+  .gh-header .inner{max-width:1020px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .gh-brand{display:flex;align-items:center;gap:9px;color:#fff;font-weight:600;font-size:15px;text-decoration:none}
+  .gh-brand:hover{opacity:.85}
+  .gh-mark{width:26px;height:26px}
+  .gh-crumb{color:rgba(255,255,255,.7);font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
+  .gh-crumb .sep{opacity:.55}
+  .gh-crumb a{color:rgba(255,255,255,.7);text-decoration:none}
+  .gh-crumb a:hover{color:#fff}
+  .gh-crumb .cur{color:#fff;font-weight:600}
+  .page-head{border-bottom:1px solid var(--line);background:var(--card)}
+  .page-head .inner{max-width:1020px;margin:0 auto;padding:22px}
+  .page-head h1{font-size:22px;font-weight:600;letter-spacing:-.01em;line-height:1.25;display:flex;align-items:center;gap:10px;color:var(--ink)}
+  .page-head .desc{color:var(--ink-soft);font-size:14px;margin-top:6px}
+  .page-head .Label{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--green);background:rgba(31,131,61,.1);border-radius:999px;padding:2px 10px;margin-top:10px}
 
   .formats{
     margin-top:26px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
@@ -80,18 +72,18 @@
   .dropzone .hint b{color:var(--ink)}
   .dz-actions{margin-top:18px}
   button{
-    font-family:inherit;font-size:.88rem;font-weight:600;border-radius:999px;
-    padding:10px 26px;cursor:pointer;border:1px solid var(--line);
-    background:var(--card);color:var(--ink);
-    transition:background .12s,transform .12s,box-shadow .12s;
+    font-family:inherit;font-size:14px;font-weight:600;border-radius:6px;
+    padding:5px 16px;cursor:pointer;border:1px solid var(--line);
+    background:var(--gray-soft);color:var(--ink);
+    transition:background .12s;
   }
-  button:hover{background:#f2f6f5}
+  button:hover{background:#eaeef2}
   button.primary{
-    background:linear-gradient(135deg,var(--teal-2),var(--teal));
-    border:none;color:#fff;font-weight:700;padding:12px 32px;
-    box-shadow:0 8px 20px -8px rgba(15,102,96,.55);
+    background:var(--green);
+    border:1px solid rgba(31,35,40,.15);color:#fff;font-weight:600;padding:6px 18px;
+    box-shadow:none;
   }
-  button.primary:hover{transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(15,102,96,.6)}
+  button.primary:hover{background:var(--green-hover)}
   button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
 
   .progress{margin-top:16px;display:none;align-items:center;gap:12px;font-size:.82rem;color:var(--ink-soft)}
@@ -160,19 +152,32 @@
   footer{margin-top:32px;font-size:.78rem;color:var(--ink-soft);line-height:1.7}
   footer p{margin-top:8px}
   footer b{color:var(--ink)}
+
+  /* --- Primer overrides --- */
+  .dropzone{border-radius:6px;border-color:var(--line)}
+  .dropzone:hover,.dropzone.dragover{border-color:var(--teal);background:var(--canvas,#fff);box-shadow:0 0 0 3px var(--teal-soft)}
+  .formats .chip{border-radius:2em}
+  .summary.show,.table-card,.rule input{border-radius:6px}
+  .summary .stat{border-radius:0}
+  .badge{border-radius:2em}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <a class="back" href="../">← ツール集にもどる</a>
-    <div class="head-row">
-      <h1>秘密度一括チェック<small>ファイルの外部連携前の秘密度チェックツール</small></h1>
-      <span class="local-badge"><span class="main">ファイルは送信されません</span><span class="sub">通信を切っても使えます（完全ローカル処理）</span></span>
-    </div>
+<header class="gh-header">
+  <div class="inner">
+    <a class="gh-brand" href="../../"><svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Portal</a>
+    <span class="gh-crumb"><span class="sep">/</span><a href="../">ツール集</a><span class="sep">/</span><span class="cur">秘密度一括チェック</span></span>
   </div>
 </header>
+
+<div class="page-head">
+  <div class="inner">
+    <h1>🛡️ 秘密度一括チェック</h1>
+    <p class="desc">ファイルの外部連携前の秘密度チェックツール。</p>
+    <span class="Label">✓ ファイルは送信されません（完全ローカル処理）</span>
+  </div>
+</div>
 
 <main class="wrap">
 

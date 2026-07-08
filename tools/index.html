@@ -3,199 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ツール集</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect x=%2210%22 y=%2230%22 width=%2280%22 height=%2255%22 rx=%2210%22 fill=%22%230f6660%22/%3E%3Cpath d=%22M35 30 V22 a8 8 0 0 1 8-8 h14 a8 8 0 0 1 8 8 v8%22 fill=%22none%22 stroke=%22%230f6660%22 stroke-width=%229%22/%3E%3Ccircle cx=%2250%22 cy=%2257%22 r=%2210%22 fill=%22%23fff%22/%3E%3C/svg%3E">
-<style>
-  :root{
-    --bg:#eef1f2; --ink:#17222c; --ink-soft:#63707b;
-    --card:#fff; --line:#e2e7e9;
-    --teal:#0f6660; --teal-2:#17a294; --teal-soft:#e2f1ef;
-    --shadow:0 1px 2px rgba(15,40,38,.05),0 18px 44px -20px rgba(15,60,55,.25);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{-webkit-text-size-adjust:100%}
-  body{
-    font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",Meiryo,sans-serif;
-    background:var(--bg);color:var(--ink);line-height:1.6;
-    min-height:100vh;display:flex;flex-direction:column;
-  }
-  .wrap{max-width:1020px;margin:0 auto;padding:0 22px;width:100%}
-
-  /* ---------- hero ---------- */
-  .hero{
-    background:linear-gradient(135deg,#0b2f2c 0%,#0f4c47 55%,#15655d 100%);
-    color:#fff;padding:64px 0 96px;position:relative;overflow:hidden;
-  }
-  .hero::before,.hero::after{
-    content:"";position:absolute;border-radius:50%;pointer-events:none;
-  }
-  .hero::before{
-    width:460px;height:460px;right:-140px;top:-180px;
-    background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%);
-  }
-  .hero::after{
-    width:340px;height:340px;left:-120px;bottom:-200px;
-    background:radial-gradient(circle,rgba(23,162,148,.35),transparent 65%);
-  }
-  .eyebrow{
-    display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.28em;
-    color:rgba(255,255,255,.66);text-transform:uppercase;margin-bottom:14px;
-  }
-  .hero h1{font-size:clamp(2.1rem,5vw,2.9rem);font-weight:800;letter-spacing:.04em;line-height:1.15}
-  .hero p{margin-top:12px;font-size:.95rem;color:rgba(255,255,255,.78);max-width:560px}
-
-  /* ---------- cards ---------- */
-  main{flex:1;padding-bottom:64px}
-  .grid{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;
-    margin-top:-52px;position:relative;z-index:1;
-  }
-  .tool{
-    display:flex;flex-direction:column;gap:14px;
-    background:var(--card);border:1px solid var(--line);border-radius:22px;
-    padding:28px 26px 24px;text-decoration:none;color:inherit;
-    box-shadow:var(--shadow);
-    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
-    animation:fadeUp .5s ease both;
-  }
-  .tool:nth-child(2){animation-delay:.08s}
-  .tool:nth-child(3){animation-delay:.16s}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion:reduce){.tool{animation:none}}
-  a.tool:hover{
-    transform:translateY(-4px);border-color:#bcd4d0;
-    box-shadow:0 2px 4px rgba(15,40,38,.06),0 26px 56px -22px rgba(15,80,72,.35);
-  }
-  .icon-tile{
-    width:56px;height:56px;border-radius:16px;background:var(--teal-soft);
-    display:flex;align-items:center;justify-content:center;
-  }
-  .icon-tile svg{width:34px;height:34px}
-  .tool h2{font-size:1.16rem;font-weight:800;letter-spacing:.02em}
-  .tool>p{font-size:.86rem;color:var(--ink-soft);flex:1}
-  .tags{display:flex;flex-wrap:wrap;gap:6px}
-  .tag{
-    font-size:.7rem;font-weight:700;color:var(--teal);
-    background:var(--teal-soft);border-radius:999px;padding:4px 12px;
-  }
-  .cta{
-    margin-top:4px;display:flex;align-items:center;justify-content:space-between;
-    border-top:1px solid var(--line);padding-top:16px;
-  }
-  .cta .label{font-size:.78rem;color:var(--ink-soft)}
-  .open{
-    font-size:.85rem;font-weight:700;color:#fff;border-radius:999px;padding:9px 24px;
-    background:linear-gradient(135deg,var(--teal-2),var(--teal));
-    box-shadow:0 8px 20px -8px rgba(15,102,96,.55);
-    transition:transform .15s ease,box-shadow .15s ease;
-  }
-  a.tool:hover .open{transform:translateY(-1px);box-shadow:0 12px 24px -8px rgba(15,102,96,.6)}
-
-  .tool.soon{
-    border:2px dashed #c6d0cf;background:rgba(255,255,255,.55);
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:none;
-    align-items:center;justify-content:center;text-align:center;
-    color:var(--ink-soft);min-height:260px;gap:8px;
-  }
-  .tool.soon .plus{
-    width:48px;height:48px;border-radius:50%;background:#e6ecec;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.5rem;color:#9aa8a6;line-height:1;
-  }
-  .tool.soon span{font-size:.84rem}
-
-  footer{border-top:1px solid var(--line);padding:20px 0 28px;font-size:.76rem;color:var(--ink-soft)}
-  footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-</style>
+<title>ツール集 · Portal</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect x=%222%22 y=%222%22 width=%2228%22 height=%2228%22 rx=%228%22 fill=%22%2324292f%22/%3E%3Cpath d=%22M10 12 l5 4 -5 4 M17 20 h5%22 stroke=%22%23fff%22 stroke-width=%222.4%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
 
-<div class="hero">
-  <div class="wrap">
-    <a href="../" style="display:inline-block;margin-bottom:16px;font-size:.8rem;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none">← ポータルにもどる</a>
-    <br>
-    <span class="eyebrow">Tools Portal</span>
-    <h1>ツール集</h1>
-    <p>ブラウザだけで完結する業務支援ツール。インストール不要・データは外部に送信されません。</p>
+<header class="gh-header">
+  <div class="inner">
+    <a class="gh-brand" href="../">
+      <svg class="gh-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="#fff"/><path d="M10 12 l5 4 -5 4 M17 20 h5" stroke="#24292f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Portal
+    </a>
+    <span class="gh-crumb"><span class="sep">/</span><span class="cur">ツール集</span></span>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="inner">
+    <h1><span class="title-emoji">🧰</span>ツール集</h1>
+    <p class="desc">ブラウザだけで完結する業務支援ツール。インストール不要で、入力したデータは外部に送信されません。</p>
   </div>
 </div>
 
-<main>
-  <div class="wrap">
-    <div class="grid">
+<main class="container">
+  <div class="card-grid">
 
-      <a class="tool" href="./check/">
-        <div class="icon-tile">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 4 L90 18 V52 C90 76 72 90 50 97 C28 90 10 76 10 52 V18 Z" fill="#0f6660"/>
-            <path d="M30 50 L44 64 L72 35" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h2>秘密度一括チェック</h2>
-        <p>Word / Excel / PowerPoint / PDF / ZIP をまとめてドラッグ＆ドロップするだけで、Microsoft Purview の秘密度ラベル（レベル2・レベル3）が付いたファイルを一括で検出。外部連携前の最終確認に。</p>
-        <div class="tags">
-          <span class="tag">完全ローカル処理</span>
-          <span class="tag">最大500ファイル</span>
-          <span class="tag">ZIP内も自動チェック</span>
-        </div>
-        <div class="cta">
-          <span class="label">v1.3</span>
-          <span class="open">ツールを開く →</span>
-        </div>
-      </a>
-
-      <a class="tool" href="./rate/">
-        <div class="icon-tile" style="background:#e6effd">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="44" fill="#2f6fed"/>
-            <path d="M34 26 L50 48 L66 26 M50 48 V76 M36 56 H64 M36 66 H64" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h2>JPY為替レート確認・換算</h2>
-        <p>USD / CNY / HKD / VND / IDR / THB / SGD / AUD の対円レートをひと目で確認し、任意の通貨ペアで金額換算。3桁区切り入力・ペア記憶・結果コピーなどの便利機能つき。</p>
-        <div class="tags">
-          <span class="tag" style="color:#2f6fed;background:#e6effd">8通貨対応</span>
-          <span class="tag" style="color:#2f6fed;background:#e6effd">3桁区切り入力</span>
-          <span class="tag" style="color:#2f6fed;background:#e6effd">レート取得時のみ通信</span>
-        </div>
-        <div class="cta">
-          <span class="label">v1.0</span>
-          <span class="open" style="background:linear-gradient(135deg,#4b86f2,#2f6fed);box-shadow:0 8px 20px -8px rgba(47,111,237,.55)">ツールを開く →</span>
-        </div>
-      </a>
-
-      <a class="tool" href="./bic/">
-        <div class="icon-tile" style="background:#e2f1ef">
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="44" fill="#0f6660"/>
-            <path d="M28 40 h44 M28 54 h44 M40 28 L34 72 M66 28 L60 72" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h2>SWIFT / BICコード照会</h2>
-        <p>SWIFTコード（BIC）を入力すると、国・所在地・本支店・形式の正否を解読し、主要金融機関なら名称も表示。送金先の確認に。入力は端末内で完結します。</p>
-        <div class="tags">
-          <span class="tag">完全ローカル処理</span>
-          <span class="tag">構造解読＋辞書照合</span>
-          <span class="tag">公式確認への導線つき</span>
-        </div>
-        <div class="cta">
-          <span class="label">v1.0</span>
-          <span class="open">ツールを開く →</span>
-        </div>
-      </a>
-
-      <div class="tool soon">
-        <div class="plus">＋</div>
-        <span>新しいツールを準備中</span>
+    <a class="card" href="./check/">
+      <div class="card-top">
+        <span class="card-icon">🛡️</span>
+        <span class="card-title">秘密度一括チェック</span>
       </div>
+      <p class="card-desc">Word / Excel / PowerPoint / PDF / ZIP をまとめてドラッグ＆ドロップし、Microsoft Purview の秘密度ラベル（レベル2・3）が付いたファイルを一括検出。</p>
+      <div class="tags">
+        <span class="Label">完全ローカル処理</span>
+        <span class="Label">最大500ファイル</span>
+      </div>
+      <div class="card-foot">
+        <span class="Label Label--success">● 公開中</span>
+        <span class="muted mono">v1.3</span>
+      </div>
+    </a>
 
+    <a class="card" href="./rate/">
+      <div class="card-top">
+        <span class="card-icon">💱</span>
+        <span class="card-title">JPY為替レート確認・換算</span>
+      </div>
+      <p class="card-desc">USD / CNY / HKD / VND / IDR / THB / SGD / AUD の対円レートを確認し、任意の通貨ペアで金額換算。3桁区切り入力・ペア記憶つき。</p>
+      <div class="tags">
+        <span class="Label">8通貨対応</span>
+        <span class="Label">レート取得時のみ通信</span>
+      </div>
+      <div class="card-foot">
+        <span class="Label Label--success">● 公開中</span>
+        <span class="muted mono">v1.0</span>
+      </div>
+    </a>
+
+    <a class="card" href="./bic/">
+      <div class="card-top">
+        <span class="card-icon">🏦</span>
+        <span class="card-title">SWIFT / BICコード照会</span>
+      </div>
+      <p class="card-desc">BICを入力すると国・所在地・本支店・形式の正否を解読し、主要金融機関なら名称も表示。送金先の確認に。入力は端末内で完結。</p>
+      <div class="tags">
+        <span class="Label">完全ローカル処理</span>
+        <span class="Label">137行の辞書</span>
+      </div>
+      <div class="card-foot">
+        <span class="Label Label--success">● 公開中</span>
+        <span class="muted mono">v1.0</span>
+      </div>
+    </a>
+
+    <div class="card disabled">
+      <div class="card-top">
+        <span class="card-icon">＋</span>
+        <span class="card-title muted">新しいツール</span>
+      </div>
+      <p class="card-desc">準備中。</p>
+      <div class="card-foot">
+        <span class="Label Label--muted">準備中</span>
+      </div>
     </div>
+
   </div>
 </main>
 
-<footer>
-  <div class="wrap">
-    <span>各ツールはHTMLファイル1つで完結し、入力したデータが外部に送信されることはありません（為替ツールはレート取得のためだけに公開APIへアクセスします）。</span>
+<footer class="site-footer">
+  <div class="inner">
+    <span>各ツールはHTMLで完結し、入力したデータが外部に送信されることはありません（為替ツールはレート取得のためだけに公開APIへアクセスします）。</span>
+    <a href="../">← Portal</a>
   </div>
 </footer>
 
