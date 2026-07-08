@@ -336,30 +336,8 @@ def get_mufg(out, errors):
             out["mufg"] = rates
         else:
             errors["mufg"] = "parse: no rows matched"
-        # --- 調査: murcページ内のPDFリンク ---
-        for href in re.findall(r'href="([^"]*\.pdf[^"]*)"', text, flags=re.I)[:10]:
-            print("murc pdf link:", href)
     except Exception as e:
         errors["mufg"] = repr(e)
-    # --- 調査: 三菱UFJ銀行本体の相場ページ（TWD/VND掲載の可能性）---
-    for probe in (
-        "https://www.bk.mufg.jp/gdocs/kinri/list_j/kinri/kawase.html",
-        "https://www.bk.mufg.jp/kinri/kawase.html",
-    ):
-        try:
-            t = decode_jp(fetch(probe, timeout=20))
-            plain = " ".join(re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", t, flags=re.S | re.I)).split())
-            print("bk.mufg probe OK", probe, "len", len(t), "head:", plain[:250])
-        except Exception as e:
-            print("bk.mufg probe fail", probe, repr(e))
-            try:
-                t = fetch("https://r.jina.ai/" + probe, timeout=45).decode("utf-8", errors="replace")
-                print("bk.mufg via reader", probe, "len", len(t))
-                for ln in t.splitlines()[:40]:
-                    if ln.strip():
-                        print("  m|", ln[:120])
-            except Exception as e2:
-                print("bk.mufg reader fail", probe, repr(e2))
 
 
 def get_smbc(out, errors):
@@ -391,12 +369,6 @@ def get_smbc(out, errors):
             if not rates:
                 print("smbc text head:", " / ".join(text.splitlines()[:10])[:300])
             if len(rates) >= 2:
-                # --- 調査: このページの全行（追加通貨・PDFリンク探し）---
-                for ln in text.splitlines():
-                    if ln.strip():
-                        print("  s|", ln[:140])
-                for href in re.findall(r'href="([^"]*\.pdf[^"]*)"', html, flags=re.I)[:10]:
-                    print("smbc pdf link:", href)
                 out["smbc"] = rates
                 return
             last = f"{url}: parsed {len(rates)} rows"
