@@ -40,5 +40,8 @@ jobs:
             echo "No change"
           else
             git commit -m "Update bank FX rates"
-            git push
+            for i in 1 2 3; do
+              git push && break
+              git pull --rebase origin main
+            done
           fi
