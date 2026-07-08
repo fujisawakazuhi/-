@@ -53,8 +53,6 @@
     text-align:center;
   }
   .big-answer small{display:block;font-size:13px;color:var(--ink-soft);margin-top:4px;font-family:var(--sans)}
-  .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .facts span{font-size:12.5px;color:var(--ink);background:#fff;border:2px solid var(--line);padding:3px 10px}
   .warn{margin-top:10px;font-size:.84rem;color:var(--amber);background:var(--amber-soft);border:2px solid var(--amber);padding:8px 12px;display:none}
   .warn.show{display:block}
   .err{margin-top:10px;font-size:.84rem;color:var(--red);background:var(--red-soft);border:2px solid var(--red);padding:8px 12px;display:none}
@@ -80,7 +78,7 @@
 <div class="page-head">
   <div class="inner">
     <h1>📅 和暦⇔西暦・日付変換</h1>
-    <p class="desc">西暦の日付から和暦・曜日・干支を、和暦から西暦を即変換。明治〜令和対応。</p>
+    <p class="desc">西暦⇔和暦をその場で変換。明治〜令和対応。</p>
     <span class="Label">✓ 入力は端末内で完結（外部送信なし）</span>
   </div>
 </div>
@@ -99,7 +97,6 @@
     </div>
     <div class="result" id="gResult">
       <div class="big-answer" id="gAnswer"></div>
-      <div class="facts" id="gFacts"></div>
     </div>
     <div class="err" id="gErr"></div>
   </section>
@@ -118,13 +115,12 @@
           <option value="meiji">明治</option>
         </select>
       </div>
-      <div class="grp"><span>年</span><input type="number" id="wYear" min="1" max="99" placeholder="8"></div>
-      <div class="grp"><span>月（任意）</span><input type="number" id="wMonth" min="1" max="12" placeholder="--"></div>
-      <div class="grp"><span>日（任意）</span><input type="number" id="wDay" min="1" max="31" placeholder="--"></div>
+      <div class="grp"><span>年</span><input type="number" id="wYear" min="1" max="99"></div>
+      <div class="grp"><span>月（任意）</span><input type="number" id="wMonth" min="1" max="12"></div>
+      <div class="grp"><span>日（任意）</span><input type="number" id="wDay" min="1" max="31"></div>
     </div>
     <div class="result" id="wResult">
       <div class="big-answer" id="wAnswer"></div>
-      <div class="facts" id="wFacts"></div>
     </div>
     <div class="warn" id="wWarn"></div>
     <div class="err" id="wErr"></div>
@@ -167,8 +163,6 @@ var ERAS={
 };
 var ORDER=["reiwa","heisei","showa","taisho","meiji"];
 var WD=["日","月","火","水","木","金","土"];
-var ETO=["子（ね）","丑（うし）","寅（とら)","卯（う）","辰（たつ）","巳（み）","午（うま）","未（ひつじ）","申（さる）","酉（とり）","戌（いぬ）","亥（い）"];
-var ETO_A=["🐭","🐮","🐯","🐰","🐲","🐍","🐴","🐑","🐵","🐔","🐶","🐗"];
 
 function jpYear(n){return n===1?"元":String(n)}
 function utc(y,m,d){return Date.UTC(y,m-1,d)}
@@ -187,14 +181,6 @@ function fmtDate(t){
   var d=new Date(t);
   return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),wd:WD[d.getUTCDay()]};
 }
-function isLeap(y){return (y%4===0&&y%100!==0)||y%400===0}
-function eto(y){return {n:ETO[(y-4+1200)%12],a:ETO_A[(y-4+1200)%12]}}
-function daysFromToday(t){
-  var n=new Date();
-  var today=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
-  return Math.round((t-today)/86400000);
-}
-
 /* ---- 西暦 → 和暦 ---- */
 function runG(){
   var v=$("gDate").value;
@@ -207,21 +193,6 @@ function runG(){
   var f=fmtDate(t);
   $("gAnswer").innerHTML=w.era+jpYear(w.year)+"年"+f.m+"月"+f.d+"日（"+f.wd+"）"
     +"<small>"+f.y+"年"+f.m+"月"+f.d+"日</small>";
-  var facts=[];
-  var e=eto(f.y);
-  facts.push(e.a+" "+e.n+"年");
-  facts.push(isLeap(f.y)?"うるう年":"平年");
-  var diff=daysFromToday(t);
-  if(diff===0)facts.push("きょう");
-  else if(diff>0)facts.push("きょうから "+diff.toLocaleString()+" 日後");
-  else facts.push("きょうから "+Math.abs(diff).toLocaleString()+" 日前");
-  if(diff<0){
-    var n=new Date(),age=n.getFullYear()-f.y;
-    var mNow=n.getMonth()+1,dNow=n.getDate();
-    if(mNow<f.m||(mNow===f.m&&dNow<f.d))age--;
-    if(age>=0&&age<=130)facts.push("この日生まれなら満 "+age+" 歳");
-  }
-  $("gFacts").innerHTML=facts.map(function(s){return "<span>"+s+"</span>"}).join("");
   res.classList.add("show");
 }
 
@@ -255,22 +226,8 @@ function runW(){
       warn.textContent="⚠ この日は正しくは「"+actual.era+jpYear(actual.year)+"年"+m+"月"+d+"日」です（"+e.name+"の期間外）。";
       warn.classList.add("show");
     }
-    var e2=eto(f.y),facts=[e2.a+" "+e2.n+"年",isLeap(f.y)?"うるう年":"平年"];
-    $("wFacts").innerHTML=facts.map(function(s){return "<span>"+s+"</span>"}).join("");
   }else{
-    $("wAnswer").innerHTML=gy+"年<small>"+e.name+jpYear(y)+"年（月日を入れると曜日も出ます）</small>";
-    var msgs=[];
-    ORDER.forEach(function(k2){
-      var o=ERAS[k2];if(o.name===e.name)return;
-      var sY=new Date(o.start).getUTCFullYear();
-      var eY=o.end?new Date(o.end).getUTCFullYear():null;
-      if(gy>=sY&&(eY===null||gy<=eY)){
-        msgs.push("同じ"+gy+"年には「"+o.name+jpYear(gy-o.base)+"年」の期間もあります");
-      }
-    });
-    if(msgs.length){warn.textContent="※ "+msgs.join("／");warn.classList.add("show")}
-    var e3=eto(gy);
-    $("wFacts").innerHTML=["<span>"+e3.a+" "+e3.n+"年</span>","<span>"+(isLeap(gy)?"うるう年":"平年")+"</span>"].join("");
+    $("wAnswer").innerHTML=gy+"年<small>"+e.name+jpYear(y)+"年</small>";
   }
   res.classList.add("show");
 }
