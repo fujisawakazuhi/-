@@ -104,12 +104,16 @@ var allOps=[],columns=[];
 
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 
+function norm(s){
+  // 全角英数→半角などを吸収して検索（ＳＢＩ↔SBI等）
+  try{return String(s).normalize("NFKC").toLowerCase()}catch(e){return String(s).toLowerCase()}
+}
 function renderTable(filter){
   var tb=$("tbody"); tb.innerHTML="";
-  var f=(filter||"").trim();
+  var f=norm((filter||"").trim());
   var shown=0;
   allOps.forEach(function(op){
-    var hay=columns.map(function(c){return op[c]||""}).join(" ");
+    var hay=norm(columns.map(function(c){return op[c]||""}).join(" "));
     if(f && hay.indexOf(f)===-1) return;
     var tr=document.createElement("tr");
     tr.innerHTML=columns.map(function(c){return "<td>"+esc(op[c]||"")+"</td>"}).join("");

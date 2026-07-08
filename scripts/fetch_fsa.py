@@ -210,29 +210,15 @@ def get_shobun(stamp, errors):
         try:
             html = decode_jp(fetch(top))
             list_pages.append((top, html))
-            all_links = links_of(html, top)
-            print("shobun index links dump (50-):")
-            for u, t in all_links[50:160]:
-                print("   L|", t[:44], "|", u[:90])
-            # 年度別アーカイブへのリンク（「令和◯年度」等のテキスト or 年度一覧らしきURL）
-            for u, t in all_links:
+            # 年度別アーカイブへのリンクがあれば辿る（現状の金融庁サイトには無いが将来用）
+            for u, t in links_of(html, top):
                 if re.search(r"(令和|平成)\s*\d+年度", t) and u.endswith(".html"):
                     if u not in [p for p, _ in list_pages]:
                         list_pages.append((u, None))
-                        print("shobun year-archive link:", t[:30], u)
             break
         except Exception as e:
             print("shobun news index fail", top, repr(e))
-    # 年度別アーカイブのURL候補を直接プローブ
-    for cand in (BASE + "/news/r7.html", BASE + "/news/r7/index.html",
-                 BASE + "/news/index_r7.html", BASE + "/news/newslist_r7.html"):
-        try:
-            raw = fetch(cand, timeout=20)
-            print("shobun year candidate OK:", cand, "bytes", len(raw))
-            list_pages.append((cand, decode_jp(raw)))
-        except Exception as e:
-            print("shobun year candidate fail:", cand, repr(e))
-    print("shobun list pages:", [u for u, _ in list_pages][:10])
+    print("shobun list pages:", [u for u, _ in list_pages][:6])
 
     items = []
     seen_pages = set()
@@ -301,9 +287,7 @@ def get_shobun(stamp, errors):
     print("shobun extracted:", len(uniq))
     for it in uniq[:10]:
         print("  shobun item:", it["date"], it["title"][:60], it["url"])
-    if not uniq:
-        errors["shobun"] = "no items extracted"
-        return
+    # 0件でも正常（該当する新着発表が無い週は普通にある）— 更新時刻だけ進める
     # 既存とマージ（既存を残しつつ新規を追加）
     try:
         with open(SHB_OUT, encoding="utf-8") as f:
