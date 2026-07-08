@@ -1,6 +1,6 @@
 {
- "updated": "2026-07-08 17:20",
- "updated_iso": "2026-07-08T17:20:23.534664+09:00",
+ "updated": "2026-07-08 17:25",
+ "updated_iso": "2026-07-08T17:25:18.914391+09:00",
  "currencies": [
   "USD",
   "EUR",
@@ -34,12 +34,12 @@
      "ttb": 0.1051
     }
    },
-   "fetched": "2026-07-08 17:20"
+   "fetched": "2026-07-08 17:25"
   }
  },
  "errors": {
-  "mizuho": "<HTTPError 403: 'Forbidden'>",
-  "smbc": "https://www.smbc.co.jp/kojin/gaika/soba/: <HTTPError 404: 'Not Found'>",
-  "wise": "https://api.wise.com/v1/rates?source=VND&target=JPY: <HTTPError 403: 'Forbidden'>"
+  "mizuho": "https://www.mizuhobank.co.jp/market/quote.csv: <HTTPError 403: 'Forbidden'>",
+  "smbc": "https://www.smbc.co.jp/kojin/soukin/kawase.html: <HTTPError 404: 'Not Found'>",
+  "wise": "converter VND: <HTTPError 403: 'Forbidden'>"
  }
 }
