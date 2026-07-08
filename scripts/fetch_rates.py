@@ -176,6 +176,28 @@ def pdf_text(raw):
     return "\n".join((p.extract_text() or "") for p in r.pages)
 
 
+def parse_mizuho_text(text):
+    """みずほ公表表のテキストからTTS/TTBを抽出。
+    fx-quotation PDF は T.T.S / ACC / T.T.B 列の可能性があるため、
+    3値が単調減少なら 1列目と3列目を採用する。"""
+    rates = {}
+    for line in text.splitlines():
+        line = " ".join(line.replace(",", " ").split())
+        ccy, tail = ccy_of(line)
+        if not ccy or ccy in rates:
+            continue
+        nums = floats_in(tail)
+        cand = [normalize(ccy, v) for v in nums]
+        cand = [v for v in cand if v is not None]
+        if len(cand) >= 3 and cand[0] > cand[1] > cand[2]:
+            rates[ccy] = {"tts": cand[0], "ttb": cand[2]}
+            print("mizuho row(3col)", ccy, cand[:4], "raw:", line[:110])
+        elif len(cand) >= 2 and cand[0] != cand[1]:
+            rates[ccy] = {"tts": max(cand[0], cand[1]), "ttb": min(cand[0], cand[1])}
+            print("mizuho row(2col)", ccy, cand[:3], "raw:", line[:110])
+    return rates
+
+
 def get_mizuho(out, errors):
     last = None
     # 0) 公表PDF（日付入りURLが予測可能）
@@ -221,6 +243,36 @@ def get_mizuho(out, errors):
         except Exception as e:
             last = f"{url}: {e!r}"
             print("mizuho pdf fail", last)
+    # 0.5) 読み取りプロキシ経由（みずほは全クラウドIPを遮断しているため別経路で取得）
+    for target in (
+        f"https://www.mizuhobank.co.jp/market/historical/backnumber_b/pdf/fx-quotation{ymd}.pdf",
+        "https://www.mizuhobank.co.jp/market/csv/quote.csv",
+        "https://www.mizuhobank.co.jp/market/quote.csv",
+    ):
+        url = "https://r.jina.ai/" + target
+        try:
+            text = fetch(url, timeout=60).decode("utf-8", errors="replace")
+            print("--- mizuho via reader", target, "len", len(text))
+            print("  head:", " / ".join(text.splitlines()[:8])[:300])
+            rates = parse_mizuho_text(text)
+            if len(rates) >= 2:
+                print("mizuho via reader parsed:", rates)
+                out["mizuho"] = rates
+                return
+            last = f"reader {target}: parsed {len(rates)}"
+        except Exception as e:
+            last = f"reader {target}: {e!r}"
+            print("mizuho reader fail", last)
+    # 0.7) 転載サイトの探索（構造確認用ログ）
+    try:
+        html = decode_jp(fetch("https://fx.sauda.net/"))
+        links = re.findall(r'href="([^"]+)"[^>]*>([^<]{0,40})', html)
+        hits = [(h, t) for h, t in links if "mizuho" in h.lower() or "みずほ" in t]
+        print("sauda probe hits:", hits[:10])
+        m = re.search(r"<title>([^<]+)</title>", html)
+        print("sauda title:", m.group(1) if m else "?")
+    except Exception as e:
+        print("sauda probe fail", repr(e))
     # 1) 素のHTTP（速い）
     for url in (
         "https://www.mizuhobank.co.jp/market/csv/quote.csv",
