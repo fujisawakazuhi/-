@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>資金移動業者 登録一覧ウォッチャー</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 shape-rendering=%22crispEdges%22%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%222%22 y=%222%22 width=%2212%22 height=%2212%22/%3E%3C/g%3E%3Cg fill=%22%23fdfcf8%22%3E%3Crect x=%223%22 y=%223%22 width=%2210%22 height=%2210%22/%3E%3C/g%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%224%22 y=%225%22 width=%226%22 height=%221%22/%3E%3Crect x=%224%22 y=%228%22 width=%226%22 height=%221%22/%3E%3Crect x=%224%22 y=%2211%22 width=%224%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%233f9a50%22%3E%3Crect x=%2211%22 y=%224%22 width=%222%22 height=%222%22/%3E%3C/g%3E%3Cg fill=%22%23e0679d%22%3E%3Crect x=%2211%22 y=%227%22 width=%222%22 height=%222%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/sakura.css">
+<style>
+  :root{
+    --ink-soft:#6d6685; --line:#3a3352;
+    --accent:#e0679d; --accent-soft:#fbe3ef;
+    --addbg:#e7f6e3; --addln:#3f9a50; --rembg:#ffebe9; --remln:#cf222e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:light;
+  }
+  body{padding-bottom:60px}
+  .page-head{background:transparent}
+  .page-head .inner{max-width:960px;margin:0 auto;padding:22px 20px}
+  .page-head h1{font-family:var(--dot);font-size:24px;font-weight:400;letter-spacing:1px;line-height:1.3;color:var(--ink);text-shadow:2px 2px 0 var(--accent-soft)}
+  .page-head .desc{color:var(--ink-soft);font-size:14px;margin-top:6px}
+
+  main.wrap{max-width:960px;padding-top:0}
+  .tool-card{background:rgba(255,255,255,.95);border:3px solid var(--ink);box-shadow:var(--hard);padding:20px;margin-top:20px}
+  .tool-card h2{font-family:var(--dot);font-size:15px;letter-spacing:1px;margin-bottom:12px}
+  .updated{font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);background:var(--accent-soft);border:2px solid var(--ink);display:inline-block;padding:4px 12px;margin-bottom:6px}
+  .cnt{font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);background:var(--green-soft);border:2px solid var(--ink);display:inline-block;padding:4px 12px;margin-left:8px;margin-bottom:6px}
+
+  .chg{border:2px solid var(--line);margin-top:10px}
+  .chg .d{font-family:var(--dot);font-size:13px;letter-spacing:1px;padding:6px 12px;border-bottom:2px solid var(--line);background:var(--accent-soft)}
+  .chg ul{list-style:none;padding:8px 12px}
+  .chg li{font-size:.88rem;padding:4px 8px;margin:4px 0;border:2px solid}
+  .chg li.add{background:var(--addbg);border-color:var(--addln)}
+  .chg li.add::before{content:"＋ 新規登録　";font-weight:700;color:var(--addln)}
+  .chg li.rem{background:var(--rembg);border-color:var(--remln)}
+  .chg li.rem::before{content:"－ 登録抹消　";font-weight:700;color:var(--remln)}
+  .nochg{font-size:.86rem;color:var(--ink-soft);padding:8px 0}
+
+  #q{font-family:inherit;font-size:1rem;color:var(--ink);background:#fff;border:2px solid var(--line);padding:9px 12px;outline:none;width:min(360px,100%)}
+  #q:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
+  .tablewrap{overflow-x:auto;margin-top:12px;max-height:70vh;overflow-y:auto}
+  table.ops{border-collapse:collapse;font-size:.85rem;width:100%}
+  .ops th,.ops td{border:2px solid var(--line);padding:6px 9px;text-align:left;white-space:nowrap}
+  .ops thead th{font-family:var(--dot);font-weight:400;letter-spacing:1px;background:var(--accent-soft);font-size:12px;position:sticky;top:0}
+  .note{font-size:.78rem;color:var(--ink-soft);line-height:1.9;margin-top:10px}
+  .note a{color:var(--pink-deep)}
+  .loading{padding:24px;text-align:center;color:var(--ink-soft);font-family:var(--dot);letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <a class="logo" href="../../">✿</a>
+  <a class="brand" href="../../">PORTAL</a>
+  <span class="crumb">/ <a href="../">資金移動業関係</a> / <span class="cur">登録一覧ウォッチャー</span></span>
+  <span class="lv">LV.1</span>
+</div>
+
+<div class="page-head">
+  <div class="inner">
+    <h1>🗂️ 資金移動業者 登録一覧ウォッチャー</h1>
+    <p class="desc">金融庁公表の登録一覧を毎営業日チェックし、新規登録・登録抹消を検知して記録します。</p>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="tool-card">
+    <h2>🔔 変更履歴（自動検知）</h2>
+    <div id="chgArea"><div class="loading">LOADING...</div></div>
+  </section>
+
+  <section class="tool-card">
+    <div>
+      <span class="updated" id="updated">読み込み中…</span>
+      <span class="cnt" id="cnt"></span>
+    </div>
+    <input type="text" id="q" placeholder="🔍 業者名・登録番号で絞り込み">
+    <div class="tablewrap">
+      <table class="ops"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+    </div>
+    <p class="note">
+      出典：<a href="https://www.fsa.go.jp/menkyo/menkyo.html" target="_blank" rel="noopener">金融庁「免許・許可・登録等を受けている業者一覧」</a>の資金移動業者一覧。
+      平日朝に自動取得しています。正確な情報は必ず金融庁の原典をご確認ください。
+    </p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="inner">
+    <span>個人的なウォッチページです。正確な内容は金融庁の公表資料をご確認ください。</span>
+    <a href="../">← 資金移動業関係</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var allOps=[],columns=[];
+
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function renderTable(filter){
+  var tb=$("tbody"); tb.innerHTML="";
+  var f=(filter||"").trim();
+  var shown=0;
+  allOps.forEach(function(op){
+    var hay=columns.map(function(c){return op[c]||""}).join(" ");
+    if(f && hay.indexOf(f)===-1) return;
+    var tr=document.createElement("tr");
+    tr.innerHTML=columns.map(function(c){return "<td>"+esc(op[c]||"")+"</td>"}).join("");
+    tb.appendChild(tr);
+    shown++;
+  });
+  $("cnt").textContent = f ? shown+" / "+allOps.length+" 社" : allOps.length+" 社";
+}
+
+fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
+  .then(function(r){return r.json()})
+  .then(function(d){
+    $("updated").textContent="更新: "+(d.updated||"未取得");
+    columns=(d.columns||[]).slice(0,6);
+    allOps=d.operators||[];
+    if(!columns.length&&allOps.length)columns=Object.keys(allOps[0]).slice(0,6);
+    $("thead").innerHTML="<tr>"+columns.map(function(c){return "<th>"+esc(c)+"</th>"}).join("")+"</tr>";
+    renderTable("");
+  })
+  .catch(function(){ $("updated").textContent="データ未取得（初回実行前）"; });
+
+fetch("./changes.json?ts="+Date.now(),{cache:"no-store"})
+  .then(function(r){return r.json()})
+  .then(function(chs){
+    var area=$("chgArea"); area.innerHTML="";
+    if(!chs.length){ area.innerHTML='<div class="nochg">ウォッチ開始以降、変更はまだ検知されていません。（毎営業日チェック中）</div>'; return; }
+    chs.slice(0,20).forEach(function(ch){
+      var div=document.createElement("div"); div.className="chg";
+      var lis="";
+      (ch.added||[]).forEach(function(op){
+        var vals=columns.length?columns.map(function(c){return op[c]||""}).filter(Boolean):Object.values(op);
+        lis+='<li class="add">'+esc(vals.slice(0,3).join("　"))+"</li>";
+      });
+      (ch.removed||[]).forEach(function(op){
+        var vals=columns.length?columns.map(function(c){return op[c]||""}).filter(Boolean):Object.values(op);
+        lis+='<li class="rem">'+esc(vals.slice(0,3).join("　"))+"</li>";
+      });
+      div.innerHTML='<div class="d">'+esc(ch.date)+"</div><ul>"+lis+"</ul>";
+      area.appendChild(div);
+    });
+  })
+  .catch(function(){ $("chgArea").innerHTML='<div class="nochg">ウォッチ開始以降、変更はまだ検知されていません。</div>'; });
+
+$("q").addEventListener("input",function(){renderTable(this.value)});
+})();
+</script>
+<script src="../../assets/scene.js" defer></script>
+</body>
+</html>

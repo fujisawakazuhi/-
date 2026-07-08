@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行政処分アーカイブ（資金決済関連）</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 shape-rendering=%22crispEdges%22%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%228%22 y=%222%22 width=%221%22 height=%2211%22/%3E%3Crect x=%227%22 y=%222%22 width=%223%22 height=%221%22/%3E%3Crect x=%223%22 y=%224%22 width=%2211%22 height=%221%22/%3E%3Crect x=%224%22 y=%225%22 width=%221%22 height=%222%22/%3E%3Crect x=%2212%22 y=%225%22 width=%221%22 height=%222%22/%3E%3Crect x=%225%22 y=%2212%22 width=%226%22 height=%221%22/%3E%3Crect x=%226%22 y=%2213%22 width=%224%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%23ffd94a%22%3E%3Crect x=%222%22 y=%227%22 width=%225%22 height=%221%22/%3E%3Crect x=%223%22 y=%228%22 width=%223%22 height=%221%22/%3E%3Crect x=%2210%22 y=%227%22 width=%225%22 height=%221%22/%3E%3Crect x=%2211%22 y=%228%22 width=%223%22 height=%221%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/sakura.css">
+<style>
+  :root{
+    --ink-soft:#6d6685; --line:#3a3352;
+    --accent:#e0679d; --accent-soft:#fbe3ef;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:light;
+  }
+  body{padding-bottom:60px}
+  .page-head{background:transparent}
+  .page-head .inner{max-width:860px;margin:0 auto;padding:22px 20px}
+  .page-head h1{font-family:var(--dot);font-size:24px;font-weight:400;letter-spacing:1px;line-height:1.3;color:var(--ink);text-shadow:2px 2px 0 var(--accent-soft)}
+  .page-head .desc{color:var(--ink-soft);font-size:14px;margin-top:6px}
+
+  main.wrap{max-width:860px;padding-top:0}
+  .tool-card{background:rgba(255,255,255,.95);border:3px solid var(--ink);box-shadow:var(--hard);padding:20px;margin-top:20px}
+  .updated{font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);background:var(--accent-soft);border:2px solid var(--ink);display:inline-block;padding:4px 12px;margin-bottom:10px}
+  #q{font-family:inherit;font-size:1rem;color:var(--ink);background:#fff;border:2px solid var(--line);padding:9px 12px;outline:none;width:min(360px,100%);display:block;margin-bottom:12px}
+  #q:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
+
+  .item{border:2px solid var(--line);margin-top:10px;background:#fff}
+  .item .d{font-family:var(--dot);font-size:12px;letter-spacing:1px;color:#fff;background:var(--pink-deep);display:inline-block;padding:2px 10px;margin:10px 0 0 12px}
+  .item .t{padding:8px 14px 12px;font-size:.92rem;line-height:1.7}
+  .item .t a{color:var(--ink);font-weight:600}
+  .item .t a:hover{color:var(--pink-deep)}
+  .note{font-size:.78rem;color:var(--ink-soft);line-height:1.9;margin-top:14px}
+  .note a{color:var(--pink-deep)}
+  .loading{padding:24px;text-align:center;color:var(--ink-soft);font-family:var(--dot);letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <a class="logo" href="../../">✿</a>
+  <a class="brand" href="../../">PORTAL</a>
+  <span class="crumb">/ <a href="../">資金移動業関係</a> / <span class="cur">行政処分アーカイブ</span></span>
+  <span class="lv">LV.1</span>
+</div>
+
+<div class="page-head">
+  <div class="inner">
+    <h1>⚖️ 行政処分アーカイブ</h1>
+    <p class="desc">金融庁公表の行政処分情報から、資金移動・資金決済・前払式・暗号資産関連を自動抽出して時系列で記録。</p>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="tool-card">
+    <span class="updated" id="updated">読み込み中…</span>
+    <input type="text" id="q" placeholder="🔍 業者名・キーワードで絞り込み">
+    <div id="list"><div class="loading">LOADING...</div></div>
+    <p class="note">
+      出典：<a href="https://www.fsa.go.jp/" target="_blank" rel="noopener">金融庁</a>の行政処分公表ページ（本庁公表分）。
+      キーワード（資金移動・資金決済・前払式・暗号資産等）による自動抽出のため、漏れ・誤検知がありえます。
+      財務局独自公表分は対象外です。正確な内容は必ずリンク先の原典をご確認ください。
+    </p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="inner">
+    <span>個人的なアーカイブです。正確な内容は金融庁の公表資料をご確認ください。</span>
+    <a href="../">← 資金移動業関係</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var items=[];
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+// 「令和6年10月4日」等を並び替え用の数値に
+function sortKey(d){
+  var m=String(d).match(/(令和|平成)?\s*(\d+)年(\d+)月(\d+)日/);
+  if(!m)return 0;
+  var y=+m[2];
+  if(m[1]==="令和")y+=2018; else if(m[1]==="平成")y+=1988;
+  return y*10000+(+m[3])*100+(+m[4]);
+}
+
+function render(filter){
+  var el=$("list"); el.innerHTML="";
+  var f=(filter||"").trim();
+  var shown=items.filter(function(it){
+    return !f || (it.title+it.date).indexOf(f)!==-1;
+  });
+  if(!shown.length){
+    el.innerHTML='<div class="loading">'+(items.length? "該当なし" : "データ未取得（初回実行前）")+'</div>';
+    return;
+  }
+  shown.forEach(function(it){
+    var div=document.createElement("div"); div.className="item";
+    div.innerHTML=(it.date?'<span class="d">'+esc(it.date)+"</span>":"")
+      +'<div class="t"><a href="'+esc(it.url)+'" target="_blank" rel="noopener">'+esc(it.title)+"</a></div>";
+    el.appendChild(div);
+  });
+}
+
+fetch("./items.json?ts="+Date.now(),{cache:"no-store"})
+  .then(function(r){return r.json()})
+  .then(function(d){
+    $("updated").textContent="更新: "+(d.updated||"未取得")+"　全 "+(d.items||[]).length+" 件";
+    items=(d.items||[]).slice().sort(function(a,b){return sortKey(b.date)-sortKey(a.date)});
+    render("");
+  })
+  .catch(function(){ $("updated").textContent="データ未取得（初回実行前）"; render(""); });
+
+$("q").addEventListener("input",function(){render(this.value)});
+})();
+</script>
+<script src="../../assets/scene.js" defer></script>
+</body>
+</html>

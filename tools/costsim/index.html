@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海外送金コスト比較シミュレータ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 shape-rendering=%22crispEdges%22%3E%3Cg fill=%22%23ffd94a%22%3E%3Crect x=%223%22 y=%222%22 width=%224%22 height=%221%22/%3E%3Crect x=%222%22 y=%223%22 width=%226%22 height=%221%22/%3E%3Crect x=%221%22 y=%224%22 width=%228%22 height=%221%22/%3E%3Crect x=%221%22 y=%225%22 width=%228%22 height=%221%22/%3E%3Crect x=%221%22 y=%226%22 width=%228%22 height=%221%22/%3E%3Crect x=%222%22 y=%227%22 width=%226%22 height=%221%22/%3E%3Crect x=%223%22 y=%228%22 width=%224%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%224%22 y=%224%22 width=%221%22 height=%221%22/%3E%3Crect x=%226%22 y=%224%22 width=%221%22 height=%221%22/%3E%3Crect x=%225%22 y=%225%22 width=%221%22 height=%221%22/%3E%3Crect x=%224%22 y=%226%22 width=%223%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%233f9a50%22%3E%3Crect x=%228%22 y=%227%22 width=%226%22 height=%221%22/%3E%3Crect x=%227%22 y=%228%22 width=%228%22 height=%221%22/%3E%3Crect x=%227%22 y=%229%22 width=%228%22 height=%221%22/%3E%3Crect x=%2213%22 y=%2210%22 width=%222%22 height=%221%22/%3E%3Crect x=%227%22 y=%2210%22 width=%224%22 height=%221%22/%3E%3Crect x=%228%22 y=%2211%22 width=%226%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%23fdfcf8%22%3E%3Crect x=%2210%22 y=%228%22 width=%222%22 height=%222%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/sakura.css">
+<style>
+  :root{
+    --ink-soft:#6d6685; --line:#3a3352;
+    --accent:#e0679d; --accent-soft:#fbe3ef;
+    --best:#e7f6e3; --amber:#9a6700; --amber-soft:#fff8c5;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:light;
+  }
+  body{padding-bottom:60px}
+  .page-head{background:transparent}
+  .page-head .inner{max-width:860px;margin:0 auto;padding:22px 20px}
+  .page-head h1{font-family:var(--dot);font-size:24px;font-weight:400;letter-spacing:1px;line-height:1.3;color:var(--ink);text-shadow:2px 2px 0 var(--accent-soft)}
+  .page-head .desc{color:var(--ink-soft);font-size:14px;margin-top:6px}
+
+  main.wrap{max-width:860px;padding-top:0}
+  .tool-card{background:rgba(255,255,255,.95);border:3px solid var(--ink);box-shadow:var(--hard);padding:20px;margin-top:20px}
+  .tool-card h2{font-family:var(--dot);font-size:15px;letter-spacing:1px;margin-bottom:12px}
+
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .grp{display:flex;flex-direction:column}
+  .grp span{font-size:.74rem;color:var(--ink-soft);margin-bottom:4px;font-weight:700}
+  input[type="text"],select{
+    font-family:inherit;font-size:1.15rem;color:var(--ink);background:#fff;
+    border:2px solid var(--line);padding:10px 12px;outline:none;
+  }
+  input:focus-visible,select:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
+  #amount{width:180px;text-align:right;font-family:var(--mono)}
+
+  .fees{margin-top:14px;background:var(--amber-soft);border:2px solid var(--amber);padding:12px 14px}
+  .fees .t{font-size:.8rem;font-weight:700;color:var(--amber);margin-bottom:8px}
+  .fees .row{gap:10px}
+  .fees input{font-size:.95rem;width:110px;padding:6px 8px;text-align:right;font-family:var(--mono)}
+  .fees .grp span{color:var(--ink)}
+
+  .tablewrap{overflow-x:auto;margin-top:16px}
+  table.res{border-collapse:collapse;font-size:.9rem;width:100%;min-width:600px}
+  .res th,.res td{border:2px solid var(--line);padding:8px 10px;text-align:right;white-space:nowrap}
+  .res thead th{font-family:var(--dot);font-weight:400;letter-spacing:1px;background:var(--accent-soft);text-align:center;font-size:12.5px}
+  .res td:first-child,.res th:first-child{text-align:left}
+  .res td.num{font-family:var(--mono)}
+  .res td.na{color:#b7b2c6;text-align:center}
+  .res tr.best td{background:var(--best)}
+  .res tr.best td:first-child::after{content:" 🏆"}
+  .updated{font-family:var(--dot);font-size:12px;letter-spacing:1px;color:var(--ink-soft);margin-top:8px}
+  .note{font-size:.78rem;color:var(--ink-soft);line-height:1.9;margin-top:10px}
+  .note a{color:var(--pink-deep)}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <a class="logo" href="../../">✿</a>
+  <a class="brand" href="../../">PORTAL</a>
+  <span class="crumb">/ <a href="../">ツール集</a> / <span class="cur">送金コスト比較</span></span>
+  <span class="lv">LV.1</span>
+</div>
+
+<div class="page-head">
+  <div class="inner">
+    <h1>✈️ 海外送金コスト比較シミュレータ</h1>
+    <p class="desc">送金額を入れると、各行の公表TTSとWiseの中値で「相手にいくら届くか」を試算して比較。</p>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="tool-card">
+    <div class="row">
+      <div class="grp"><span>送金額（円）</span><input type="text" id="amount" inputmode="numeric" value="1,000,000"></div>
+      <div class="grp">
+        <span>受取通貨</span>
+        <select id="ccy">
+          <option value="USD">米ドル USD</option>
+          <option value="EUR">ユーロ EUR</option>
+          <option value="GBP">英ポンド GBP</option>
+          <option value="CNY">人民元 CNY</option>
+          <option value="TWD">台湾ドル TWD</option>
+          <option value="KRW">韓国ウォン KRW</option>
+          <option value="VND">ベトナムドン VND</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="fees">
+      <div class="t">⚠ 手数料の仮定（編集するとこの端末に保存されます。実際の手数料プランに合わせて修正してください）</div>
+      <div class="row">
+        <div class="grp"><span>みずほ（円/件）</span><input type="text" id="feeMizuho" inputmode="numeric"></div>
+        <div class="grp"><span>三菱UFJ（円/件）</span><input type="text" id="feeMufg" inputmode="numeric"></div>
+        <div class="grp"><span>三井住友（円/件）</span><input type="text" id="feeSmbc" inputmode="numeric"></div>
+        <div class="grp"><span>Wise（%）</span><input type="text" id="feeWisePct" inputmode="decimal"></div>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table class="res">
+        <thead>
+          <tr><th>送金手段</th><th>適用レート</th><th>手数料</th><th>換算対象額</th><th>受取額</th><th>最良比</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="updated" id="updated"></div>
+    <p class="note">
+      銀行は公表TTS（電信売相場）、Wiseは中値で換算しています。銀行送金では別途、コルレス手数料・リフティングチャージ・受取側手数料がかかる場合があります。
+      レートは<a href="../bankrate/">銀行レート比較</a>と同じデータ（平日自動更新）です。試算は概算であり、実際の取引条件は各社にご確認ください。
+    </p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="inner">
+    <span>試算は参考値です。実際の手数料・レートは各社の公式情報をご確認ください。</span>
+    <a href="../">← ツール集</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var META={USD:{jp:"米ドル",unit:1},EUR:{jp:"ユーロ",unit:1},GBP:{jp:"英ポンド",unit:1},CNY:{jp:"人民元",unit:1},TWD:{jp:"台湾ドル",unit:1},KRW:{jp:"韓国ウォン",unit:100},VND:{jp:"ベトナムドン",unit:100}};
+var PROV=[
+ {key:"mizuho",jp:"みずほ",feeId:"feeMizuho",kind:"bank"},
+ {key:"mufg",jp:"三菱UFJ",feeId:"feeMufg",kind:"bank"},
+ {key:"smbc",jp:"三井住友",feeId:"feeSmbc",kind:"bank"},
+ {key:"wise",jp:"Wise",feeId:"feeWisePct",kind:"wise"}
+];
+var DEF={feeMizuho:"7,500",feeMufg:"7,500",feeSmbc:"7,500",feeWisePct:"1.0"};
+var banks={};
+
+var $=function(id){return document.getElementById(id)};
+function num(s){return parseFloat(String(s).replace(/[,，\s]/g,""))||0}
+function comma(n){return Math.round(n).toLocaleString("ja-JP")}
+function fmtF(v,ccy){
+  var dp = v>=1000?0 : v>=10?2 : 4;
+  return v.toLocaleString("ja-JP",{minimumFractionDigits:dp,maximumFractionDigits:dp});
+}
+
+function loadFees(){
+  PROV.forEach(function(p){
+    var saved=null;
+    try{saved=localStorage.getItem("costsim_"+p.feeId)}catch(e){}
+    $(p.feeId).value = saved!=null?saved:DEF[p.feeId];
+  });
+}
+function saveFee(id){
+  try{localStorage.setItem("costsim_"+id,$(id).value)}catch(e){}
+}
+
+function calc(){
+  var amount=num($("amount").value);
+  var ccy=$("ccy").value, m=META[ccy];
+  var tb=$("tbody"); tb.innerHTML="";
+  if(!amount)return;
+  var rows=[];
+  PROV.forEach(function(p){
+    var r=banks[p.key]&&banks[p.key].rates&&banks[p.key].rates[ccy];
+    var rate=null,rateNote="";
+    if(p.kind==="wise"){ if(r&&r.mid!=null){rate=r.mid;rateNote="中値"} }
+    else{ if(r&&r.tts!=null){rate=r.tts;rateNote="TTS"} }
+    if(rate==null){ rows.push({p:p,na:true, naMsg:(r&&r.ref!=null)?"参考相場のみ（試算対象外）":"レート公表なし"}); return; }
+    var fee, base;
+    if(p.kind==="wise"){
+      var pct=num($(p.feeId).value);
+      fee=amount*pct/100;
+      base=amount-fee;
+    }else{
+      fee=num($(p.feeId).value);
+      base=amount-fee;
+    }
+    if(base<0)base=0;
+    var recv=base/rate;
+    rows.push({p:p,rate:rate,rateNote:rateNote,fee:fee,base:base,recv:recv});
+  });
+  var best=null;
+  rows.forEach(function(r){ if(!r.na&&(best==null||r.recv>best)) best=r.recv; });
+  rows.forEach(function(r){
+    var tr=document.createElement("tr");
+    if(r.na){
+      tr.innerHTML='<td>'+r.p.jp+'</td><td class="na" colspan="5">'+r.naMsg+'</td>';
+    }else{
+      var isBest = best!=null && r.recv===best;
+      if(isBest)tr.className="best";
+      var diff = best-r.recv;
+      var diffTxt = isBest?"—":("-"+fmtF(diff*m.unit==0?diff:diff,ccy)+" "+ccy);
+      tr.innerHTML='<td>'+r.p.jp+'</td>'
+        +'<td class="num">'+ (r.rate*m.unit).toLocaleString("ja-JP",{maximumFractionDigits:4}) +'<small>（'+r.rateNote+(m.unit>1?"・"+m.unit+"通貨":"")+'）</small></td>'
+        +'<td class="num">'+comma(r.fee)+' 円</td>'
+        +'<td class="num">'+comma(r.base)+' 円</td>'
+        +'<td class="num"><b>'+fmtF(r.recv,ccy)+' '+ccy+'</b></td>'
+        +'<td class="num">'+diffTxt+'</td>';
+    }
+    tb.appendChild(tr);
+  });
+}
+
+fetch("../bankrate/rates.json?ts="+Date.now(),{cache:"no-store"})
+  .then(function(r){return r.json()})
+  .then(function(d){
+    banks=d.banks||{};
+    $("updated").textContent="レート更新: "+(d.updated||"不明");
+    calc();
+  })
+  .catch(function(){ $("updated").textContent="レートを読み込めませんでした"; });
+
+loadFees();
+["amount","ccy"].forEach(function(id){ $(id).addEventListener("input",calc); });
+PROV.forEach(function(p){
+  $(p.feeId).addEventListener("input",function(){ saveFee(p.feeId); calc(); });
+});
+$("amount").addEventListener("blur",function(){
+  var v=num(this.value); if(v)this.value=comma(v);
+});
+})();
+</script>
+<script src="../../assets/scene.js" defer></script>
+</body>
+</html>
