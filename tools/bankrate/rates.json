@@ -1,6 +1,45 @@
 {
- "updated": "初回取得前",
- "currencies": ["USD", "EUR", "GBP", "CNY", "TWD", "KRW", "VND"],
- "banks": {},
- "errors": {}
+ "updated": "2026-07-08 17:20",
+ "updated_iso": "2026-07-08T17:20:23.534664+09:00",
+ "currencies": [
+  "USD",
+  "EUR",
+  "GBP",
+  "CNY",
+  "TWD",
+  "KRW",
+  "VND"
+ ],
+ "banks": {
+  "mufg": {
+   "rates": {
+    "USD": {
+     "tts": 163.37,
+     "ttb": 161.37
+    },
+    "EUR": {
+     "tts": 186.75,
+     "ttb": 183.75
+    },
+    "GBP": {
+     "tts": 220.85,
+     "ttb": 212.85
+    },
+    "CNY": {
+     "tts": 24.17,
+     "ttb": 23.57
+    },
+    "KRW": {
+     "tts": 0.1091,
+     "ttb": 0.1051
+    }
+   },
+   "fetched": "2026-07-08 17:20"
+  }
+ },
+ "errors": {
+  "mizuho": "<HTTPError 403: 'Forbidden'>",
+  "smbc": "https://www.smbc.co.jp/kojin/gaika/soba/: <HTTPError 404: 'Not Found'>",
+  "wise": "https://api.wise.com/v1/rates?source=VND&target=JPY: <HTTPError 403: 'Forbidden'>"
+ }
 }
