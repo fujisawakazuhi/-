@@ -49,8 +49,7 @@
   .res td:first-child,.res th:first-child{text-align:left}
   .res td.num{font-family:var(--mono)}
   .res td.na{color:#b7b2c6;text-align:center}
-  .res tr.best td{background:var(--best)}
-  .res tr.best td:first-child::after{content:" 🏆"}
+  .res tr.best td{background:var(--best);font-weight:700}
   .updated{font-family:var(--dot);font-size:12px;letter-spacing:1px;color:var(--ink-soft);margin-top:8px}
   .note{font-size:.78rem;color:var(--ink-soft);line-height:1.9;margin-top:10px}
   .note a{color:var(--pink-deep)}
@@ -92,27 +91,37 @@
     </div>
 
     <div class="fees">
-      <div class="t">⚠ 手数料の仮定（編集するとこの端末に保存されます。実際の手数料プランに合わせて修正してください）</div>
+      <div class="t">手数料（各社公表値ベースの初期値・2026年7月調べ。編集可＝この端末に保存されます）</div>
       <div class="row">
         <div class="grp"><span>みずほ（円/件）</span><input type="text" id="feeMizuho" inputmode="numeric"></div>
         <div class="grp"><span>三菱UFJ（円/件）</span><input type="text" id="feeMufg" inputmode="numeric"></div>
         <div class="grp"><span>三井住友（円/件）</span><input type="text" id="feeSmbc" inputmode="numeric"></div>
-        <div class="grp"><span>Wise（%）</span><input type="text" id="feeWisePct" inputmode="decimal"></div>
+        <div class="grp"><span>Wise 変動（%）</span><input type="text" id="feeWisePct" inputmode="decimal"></div>
+        <div class="grp"><span>Wise 固定（円）</span><input type="text" id="feeWiseFix" inputmode="numeric"></div>
+      </div>
+      <div style="font-size:.74rem;color:var(--ink);margin-top:8px;line-height:1.7">
+        初期値の内訳（ネット申込・円建ての場合）：みずほ＝アプリ送金5,000円＋コルレス先支払手数料2,500円／
+        三菱UFJ＝ダイレクト送金3,000円＋円為替取扱手数料2,500円（最低額）／
+        三井住友＝ダイレクト送金3,500円＋リフティングチャージ2,500円（最低額）／
+        Wise＝USD送金の例（0.43%＋67円。通貨で変動）。窓口申込は各行3,000〜4,000円程度高くなります。
       </div>
     </div>
 
     <div class="tablewrap">
       <table class="res">
         <thead>
-          <tr><th>送金手段</th><th>適用レート</th><th>手数料</th><th>換算対象額</th><th>受取額</th><th>最良比</th></tr>
+          <tr><th>送金手段</th><th>適用レート</th><th>手数料</th><th>受取額</th><th>実質コスト</th><th>最安との差</th></tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
     <div class="updated" id="updated"></div>
     <p class="note">
-      銀行は公表TTS（電信売相場）、Wiseは中値で換算しています。銀行送金では別途、コルレス手数料・リフティングチャージ・受取側手数料がかかる場合があります。
-      レートは<a href="../bankrate/">銀行レート比較</a>と同じデータ（平日自動更新）です。試算は概算であり、実際の取引条件は各社にご確認ください。
+      <b>Wiseが「中値」なのは：</b>Wiseは為替レートに利ざやを乗せず銀行間の中値をそのまま適用し、コストを上の手数料（変動%＋固定）として別建てで徴収する料金体系だからです。
+      一方、銀行はTTS（＝仲値＋為替手数料。米ドルなら仲値＋1円）で換算するため、送金手数料に加えてレートにもコストが含まれます。
+      「実質コスト」はその両方を合算した円換算の総コスト（送金額 − 受取額の中値換算）です。<br>
+      受取側の銀行手数料が別途差し引かれる場合があります。レートは<a href="../bankrate/">銀行レート比較</a>と同じデータ（平日自動更新）。
+      手数料の初期値は2026年7月時点の各社公表値に基づく目安です。試算は概算であり、実際の取引条件は各社にご確認ください。
     </p>
   </section>
 
@@ -135,7 +144,8 @@ var PROV=[
  {key:"smbc",jp:"三井住友",feeId:"feeSmbc",kind:"bank"},
  {key:"wise",jp:"Wise",feeId:"feeWisePct",kind:"wise"}
 ];
-var DEF={feeMizuho:"7,500",feeMufg:"7,500",feeSmbc:"7,500",feeWisePct:"1.0"};
+var FEE_IDS=["feeMizuho","feeMufg","feeSmbc","feeWisePct","feeWiseFix"];
+var DEF={feeMizuho:"7,500",feeMufg:"5,500",feeSmbc:"6,000",feeWisePct:"0.43",feeWiseFix:"67"};
 var banks={};
 
 var $=function(id){return document.getElementById(id)};
@@ -147,14 +157,14 @@ function fmtF(v,ccy){
 }
 
 function loadFees(){
-  PROV.forEach(function(p){
+  FEE_IDS.forEach(function(id){
     var saved=null;
-    try{saved=localStorage.getItem("costsim_"+p.feeId)}catch(e){}
-    $(p.feeId).value = saved!=null?saved:DEF[p.feeId];
+    try{saved=localStorage.getItem("costsim2_"+id)}catch(e){}
+    $(id).value = saved!=null?saved:DEF[id];
   });
 }
 function saveFee(id){
-  try{localStorage.setItem("costsim_"+id,$(id).value)}catch(e){}
+  try{localStorage.setItem("costsim2_"+id,$(id).value)}catch(e){}
 }
 
 function calc(){
@@ -171,8 +181,7 @@ function calc(){
     if(rate==null){ rows.push({p:p,na:true, naMsg:(r&&r.ref!=null)?"参考相場のみ（試算対象外）":"レート公表なし"}); return; }
     var fee, base;
     if(p.kind==="wise"){
-      var pct=num($(p.feeId).value);
-      fee=amount*pct/100;
+      fee=amount*num($("feeWisePct").value)/100 + num($("feeWiseFix").value);
       base=amount-fee;
     }else{
       fee=num($(p.feeId).value);
@@ -182,6 +191,12 @@ function calc(){
     var recv=base/rate;
     rows.push({p:p,rate:rate,rateNote:rateNote,fee:fee,base:base,recv:recv});
   });
+  // 円換算の物差しは中値（Wiseのmid、無ければ有効レートの平均）
+  var midR=banks.wise&&banks.wise.rates&&banks.wise.rates[ccy]&&banks.wise.rates[ccy].mid;
+  if(!midR){
+    var rs=rows.filter(function(r){return !r.na}).map(function(r){return r.rate});
+    midR=rs.length?rs.reduce(function(a,b){return a+b})/rs.length:null;
+  }
   var best=null;
   rows.forEach(function(r){ if(!r.na&&(best==null||r.recv>best)) best=r.recv; });
   rows.forEach(function(r){
@@ -191,14 +206,14 @@ function calc(){
     }else{
       var isBest = best!=null && r.recv===best;
       if(isBest)tr.className="best";
-      var diff = best-r.recv;
-      var diffTxt = isBest?"—":("-"+fmtF(diff*m.unit==0?diff:diff,ccy)+" "+ccy);
+      var cost = midR? amount - r.recv*midR : null;     // 実質コスト＝手数料＋為替スプレッド（円換算）
+      var diffY = (midR&&!isBest)? (best-r.recv)*midR : null;  // 最安との差（円換算）
       tr.innerHTML='<td>'+r.p.jp+'</td>'
         +'<td class="num">'+ (r.rate*m.unit).toLocaleString("ja-JP",{maximumFractionDigits:4}) +'<small>（'+r.rateNote+(m.unit>1?"・"+m.unit+"通貨":"")+'）</small></td>'
         +'<td class="num">'+comma(r.fee)+' 円</td>'
-        +'<td class="num">'+comma(r.base)+' 円</td>'
         +'<td class="num"><b>'+fmtF(r.recv,ccy)+' '+ccy+'</b></td>'
-        +'<td class="num">'+diffTxt+'</td>';
+        +'<td class="num">'+(cost!=null?("約 "+comma(cost)+" 円"):"—")+'</td>'
+        +'<td class="num">'+(isBest?'<b>最安 🏆</b>':(diffY!=null?('<span style="color:#cf222e">−'+comma(diffY)+' 円分</span>'):"—"))+'</td>';
     }
     tb.appendChild(tr);
   });
@@ -215,8 +230,8 @@ fetch("../bankrate/rates.json?ts="+Date.now(),{cache:"no-store"})
 
 loadFees();
 ["amount","ccy"].forEach(function(id){ $(id).addEventListener("input",calc); });
-PROV.forEach(function(p){
-  $(p.feeId).addEventListener("input",function(){ saveFee(p.feeId); calc(); });
+FEE_IDS.forEach(function(id){
+  $(id).addEventListener("input",function(){ saveFee(id); calc(); });
 });
 $("amount").addEventListener("blur",function(){
   var v=num(this.value); if(v)this.value=comma(v);
