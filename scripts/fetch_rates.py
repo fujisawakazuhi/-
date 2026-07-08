@@ -353,6 +353,22 @@ def get_mufg(out, errors):
 
 def get_smbc(out, errors):
     last = None
+    # 0) 公示相場PDF（日付入りURL）— まずは構造確認のためログのみ
+    ymd8 = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y%m%d")
+    for pdf_url in (
+        f"https://www.smbc.co.jp/market/backnumber/fixing/pdf_daily/now/fixing{ymd8}{ymd8}.pdf",
+    ):
+        try:
+            raw = fetch(pdf_url, timeout=30)
+            print("--- smbc pdf", pdf_url, "bytes", len(raw), "magic", raw[:5])
+            if raw[:4] == b"%PDF":
+                text = pdf_text(raw)
+                print("smbc pdf text:")
+                for ln in text.splitlines():
+                    if ln.strip():
+                        print("  p|", ln[:130])
+        except Exception as e:
+            print("smbc pdf fail", pdf_url, repr(e))
     candidates = []
     # 実ブラウザでトップからリンク探索（SMBCのメニューはJSレンダリング）
     for top in ("https://www.smbc.co.jp/kojin/", "https://www.smbc.co.jp/"):
