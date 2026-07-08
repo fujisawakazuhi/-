@@ -211,26 +211,28 @@ def get_shobun(stamp, errors):
             html = decode_jp(fetch(top))
             list_pages.append((top, html))
             all_links = links_of(html, top)
-            print("shobun index links dump:")
-            for u, t in all_links[:50]:
-                print("   L|", t[:40], "|", u[:90])
+            print("shobun index links dump (50-):")
+            for u, t in all_links[50:160]:
+                print("   L|", t[:44], "|", u[:90])
+            # 年度別アーカイブへのリンク（「令和◯年度」等のテキスト or 年度一覧らしきURL）
             for u, t in all_links:
-                if (re.search(r"(令和|平成)\s*\d+年度", t) or re.search(r"/news/r?\d+", u)) and u.endswith((".html", "/")):
+                if re.search(r"(令和|平成)\s*\d+年度", t) and u.endswith(".html"):
                     if u not in [p for p, _ in list_pages]:
                         list_pages.append((u, None))
+                        print("shobun year-archive link:", t[:30], u)
             break
         except Exception as e:
             print("shobun news index fail", top, repr(e))
-    # RSS候補もプローブ
-    for rss in (BASE + "/fsaRss/fsa_news.rdf", BASE + "/rss/fsa_news.rdf", BASE + "/news/fsa_news.rdf"):
+    # 年度別アーカイブのURL候補を直接プローブ
+    for cand in (BASE + "/news/r7.html", BASE + "/news/r7/index.html",
+                 BASE + "/news/index_r7.html", BASE + "/news/newslist_r7.html"):
         try:
-            raw = fetch(rss, timeout=20)
-            print("shobun RSS OK", rss, "bytes", len(raw))
-            print("  rss head:", decode_jp(raw)[:300].replace("\n", " "))
-            list_pages.append((rss, decode_jp(raw)))
+            raw = fetch(cand, timeout=20)
+            print("shobun year candidate OK:", cand, "bytes", len(raw))
+            list_pages.append((cand, decode_jp(raw)))
         except Exception as e:
-            print("shobun RSS fail", rss, repr(e))
-    print("shobun list pages:", [u for u, _ in list_pages][:8])
+            print("shobun year candidate fail:", cand, repr(e))
+    print("shobun list pages:", [u for u, _ in list_pages][:10])
 
     items = []
     seen_pages = set()
