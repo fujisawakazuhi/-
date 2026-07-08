@@ -17,6 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-chromium-${{ runner.os }}
+
+      - name: Install Playwright
+        run: |
+          pip install --quiet playwright
+          python3 -m playwright install --with-deps chromium
+
       - name: Fetch rates
         run: python3 scripts/fetch_rates.py
 

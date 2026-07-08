@@ -47,6 +47,75 @@ def fetch(url, timeout=25, referer=None):
         return raw
 
 
+# ---- 実ブラウザ（Playwright）によるフォールバック取得 ----
+_PW = {"ctx": None, "pw": None, "browser": None}
+
+
+def browser_page(url, wait_ms=2500, pre_url=None):
+    """Chromiumでページを開き (html, innerText) を返す。ボット対策サイト用。"""
+    if _PW["ctx"] is None:
+        from playwright.sync_api import sync_playwright
+        _PW["pw"] = sync_playwright().start()
+        _PW["browser"] = _PW["pw"].chromium.launch()
+        _PW["ctx"] = _PW["browser"].new_context(
+            locale="ja-JP", user_agent=HDRS["User-Agent"],
+            viewport={"width": 1280, "height": 900})
+    page = _PW["ctx"].new_page()
+    try:
+        if pre_url:
+            try:
+                page.goto(pre_url, wait_until="domcontentloaded", timeout=25000)
+                page.wait_for_timeout(1200)
+            except Exception as e:
+                print("browser pre_url fail", pre_url, repr(e))
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(wait_ms)
+        html = page.content()
+        text = page.evaluate("document.body ? document.body.innerText : ''")
+        return html, text
+    finally:
+        page.close()
+
+
+def browser_links(url):
+    """ページ内の全リンク (href, text) を返す。"""
+    if _PW["ctx"] is None:
+        browser_page("about:blank", wait_ms=0)
+    page = _PW["ctx"].new_page()
+    try:
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(2000)
+        return page.eval_on_selector_all(
+            "a", "els=>els.map(e=>({h:e.href||'',t:(e.innerText||'').trim()}))")
+    finally:
+        page.close()
+
+
+def close_browser():
+    try:
+        if _PW["browser"]:
+            _PW["browser"].close()
+        if _PW["pw"]:
+            _PW["pw"].stop()
+    except Exception:
+        pass
+
+
+def parse_lines(text, want=CCYS):
+    """innerText/CSVテキストの行から通貨ごとの (tts,ttb) を抽出。"""
+    rates = {}
+    for line in text.splitlines():
+        line = " ".join(line.replace(",", " ").split())
+        ccy, tail = ccy_of(line)
+        if not ccy or ccy in rates or ccy not in want:
+            continue
+        nums = floats_in(tail)
+        pair = parse_pair(ccy, nums[:2]) if len(nums) >= 2 else None
+        if pair:
+            rates[ccy] = {"tts": pair[0], "ttb": pair[1]}
+    return rates
+
+
 def decode_jp(raw):
     for enc in ("utf-8", "cp932", "euc_jp"):
         try:
@@ -102,34 +171,42 @@ def rows_from_html(text):
 
 def get_mizuho(out, errors):
     last = None
+    # 1) 素のHTTP（速い）
     for url in (
         "https://www.mizuhobank.co.jp/market/csv/quote.csv",
         "https://www.mizuhobank.co.jp/market/quote.csv",
     ):
         try:
-            raw = fetch(url, referer="https://www.mizuhobank.co.jp/market/index.html")
-            text = decode_jp(raw)
-            print("--- mizuho", url, "head ---")
-            print("\n".join(text.splitlines()[:6]))
-            rates = {}
-            for line in text.splitlines():
-                cells = [c.strip().strip('"') for c in line.split(",")]
-                joined = " ".join(cells[:3])
-                ccy, _ = ccy_of(joined)
-                if not ccy or ccy in rates:
-                    continue
-                nums = floats_in(",".join(cells[1:]))
-                pair = parse_pair(ccy, nums[:2]) if len(nums) >= 2 else None
-                if pair:
-                    rates[ccy] = {"tts": pair[0], "ttb": pair[1]}
-                    print("mizuho", ccy, pair, "raw:", line[:120])
+            text = decode_jp(fetch(url, referer="https://www.mizuhobank.co.jp/market/index.html"))
+            rates = parse_lines(text)
             if rates:
+                print("mizuho via urllib", url, rates)
                 out["mizuho"] = rates
                 return
             last = f"{url}: parsed 0 rows"
         except Exception as e:
             last = f"{url}: {e!r}"
-            print("mizuho fail", last)
+            print("mizuho urllib fail", last)
+    # 2) 実ブラウザ
+    for url in (
+        "https://www.mizuhobank.co.jp/market/csv/quote.csv",
+        "https://www.mizuhobank.co.jp/market/quote.csv",
+        "https://www.mizuhobank.co.jp/market/quote.html",
+        "https://www.mizuhobank.co.jp/market/index.html",
+    ):
+        try:
+            html, text = browser_page(url, pre_url="https://www.mizuhobank.co.jp/market/index.html")
+            rates = parse_lines(text)
+            print("--- mizuho browser", url, "textlen", len(text), "parsed", sorted(rates))
+            if not rates:
+                print("mizuho text head:", " / ".join(text.splitlines()[:12])[:400])
+            if rates:
+                out["mizuho"] = rates
+                return
+            last = f"{url}: browser parsed 0 rows"
+        except Exception as e:
+            last = f"{url}: browser {e!r}"
+            print("mizuho browser fail", last)
     errors["mizuho"] = last or "no candidate worked"
 
 
@@ -165,51 +242,37 @@ def get_mufg(out, errors):
 
 
 def get_smbc(out, errors):
-    candidates = [
-        "https://www.smbc.co.jp/kojin/kinri/kawase.html",
-        "https://www.smbc.co.jp/kojin/kawase/index.html",
-        "https://www.smbc.co.jp/kojin/soukin/kawase.html",
-    ]
-    # トップからのリンク探索
+    last = None
+    candidates = []
+    # 実ブラウザでトップからリンク探索（SMBCのメニューはJSレンダリング）
     for top in ("https://www.smbc.co.jp/kojin/", "https://www.smbc.co.jp/"):
         try:
-            text = decode_jp(fetch(top))
-            links = re.findall(r'href="([^"]*(?:kawase|souba|soba|rate|kinri)[^"]*)"', text, flags=re.I)
-            uniq = []
+            links = browser_links(top)
             for l in links:
-                if l.startswith("//"):
-                    l = "https:" + l
-                elif l.startswith("/"):
-                    l = "https://www.smbc.co.jp" + l
-                if l.startswith("http") and l not in uniq:
-                    uniq.append(l)
-            print("smbc discovered links from", top, ":", uniq[:15])
-            candidates = uniq[:10] + candidates
-            break
+                h, t = l.get("h", ""), l.get("t", "")
+                if re.search(r"kawase|souba|soba", h, re.I) or re.search(r"為替|相場", t):
+                    if h.startswith("http") and h not in candidates:
+                        candidates.append(h)
+            print("smbc discovered:", candidates[:15])
+            if candidates:
+                break
         except Exception as e:
-            print("smbc top fail", top, repr(e))
-    last = None
-    for url in candidates:
+            print("smbc top browser fail", top, repr(e))
+    candidates += [
+        "https://www.smbc.co.jp/kojin/kinri/kawase.html",
+        "https://www.smbc.co.jp/kojin/kawase/",
+    ]
+    for url in candidates[:8]:
         try:
-            text = decode_jp(fetch(url))
-            plain_all = " ".join(re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", text, flags=re.S | re.I)).split())
-            print("--- smbc try", url, "len", len(text), "---")
-            print(plain_all[:250])
-            rates = {}
-            for row in rows_from_html(text):
-                plain = " ".join(row.split())
-                ccy, tail = ccy_of(plain)
-                if not ccy or ccy in rates:
-                    continue
-                nums = floats_in(tail)
-                pair = parse_pair(ccy, nums[:2]) if len(nums) >= 2 else None
-                if pair:
-                    rates[ccy] = {"tts": pair[0], "ttb": pair[1]}
-                    print("smbc", ccy, pair, "raw:", plain[:110])
-            if rates:
+            html, text = browser_page(url)
+            rates = parse_lines(text)
+            print("--- smbc browser", url, "parsed", sorted(rates))
+            if not rates:
+                print("smbc text head:", " / ".join(text.splitlines()[:10])[:300])
+            if len(rates) >= 2:
                 out["smbc"] = rates
                 return
-            last = f"{url}: parsed 0 rows"
+            last = f"{url}: parsed {len(rates)} rows"
         except Exception as e:
             last = f"{url}: {e!r}"
             print("smbc fail", last)
@@ -221,48 +284,56 @@ def get_wise(out, errors):
     last = None
     for ccy in CCYS:
         got = False
-        # 1) 比較API（公開・キー不要のことが多い）
+        # 実ブラウザで通貨コンバータページを開き中値を抽出
         try:
-            url = f"https://api.wise.com/v3/comparisons/?sourceCurrency={ccy}&targetCurrency=JPY&sendAmount=10000"
-            data = json.loads(fetch(url, timeout=20).decode("utf-8", errors="replace"))
-            for p in data.get("providers", []):
-                if p.get("alias") in ("wise", "transferwise") or "Wise" in (p.get("name") or ""):
-                    qs = p.get("quotes") or []
-                    if qs and qs[0].get("rate"):
-                        rates[ccy] = {"mid": float(qs[0]["rate"])}
-                        got = True
-                        break
-        except Exception as e:
-            last = f"comparisons {ccy}: {e!r}"
-        if got:
-            continue
-        # 2) 通貨コンバータページから埋め込みレートを抽出
-        try:
-            url = f"https://wise.com/jp/currency-converter/{ccy.lower()}-to-jpy-rate?amount=1"
-            html = fetch(url, timeout=20).decode("utf-8", errors="replace")
-            m = re.search(r'"rate"\s*:\s*([\d.]+)', html) or re.search(r'1\s*' + ccy + r'\s*=\s*([\d.]+)\s*JPY', html)
+            url = f"https://wise.com/ja/currency-converter/{ccy.lower()}-to-jpy-rate"
+            html, text = browser_page(url, wait_ms=3500)
+            m = (re.search(r'1\s*' + ccy + r'\s*=\s*([\d,.]+)\s*JPY', text)
+                 or re.search(r'"rate"\s*:\s*([\d.]+)', html))
             if m:
-                v = float(m.group(1))
-                if normalize(ccy, v):
+                v = float(m.group(1).replace(",", ""))
+                v = normalize(ccy, v)
+                if v:
                     rates[ccy] = {"mid": v}
                     got = True
+                    print("wise", ccy, v)
         except Exception as e:
-            last = f"converter {ccy}: {e!r}"
+            last = f"{ccy}: {e!r}"
         if not got:
             print("wise fail", ccy, last)
-    if rates:
+            if ccy == "USD":
+                break  # USDすら取れないならこのソースは諦める
+    if len(rates) >= 3:
         out["wise"] = rates
-    else:
-        errors["wise"] = last or "all failed"
+        return
+    # フォールバック: 公開ミッドマーケトAPI（Wiseは中値適用なので実質同等の参考値）
+    try:
+        data = json.loads(fetch("https://open.er-api.com/v6/latest/JPY", timeout=20).decode())
+        rr = data.get("rates") or {}
+        fb = {}
+        for ccy in CCYS:
+            if rr.get(ccy):
+                fb[ccy] = {"mid": 1.0 / float(rr[ccy])}
+        if fb:
+            fb["_source"] = {"note": "mid-market via open.er-api.com"}
+            out["wise"] = {k: v for k, v in fb.items() if k != "_source"}
+            print("wise fallback er-api:", {k: round(v['mid'], 4) for k, v in out['wise'].items()})
+            return
+    except Exception as e:
+        last = f"er-api: {e!r}"
+    errors["wise"] = last or "all failed"
 
 
 def main():
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     out, errors = {}, {}
-    get_mizuho(out, errors)
-    get_mufg(out, errors)
-    get_smbc(out, errors)
-    get_wise(out, errors)
+    try:
+        get_mizuho(out, errors)
+        get_mufg(out, errors)
+        get_smbc(out, errors)
+        get_wise(out, errors)
+    finally:
+        close_browser()
 
     # 前回値の読み込み（失敗した銀行は前回値を残す）
     prev = {}
