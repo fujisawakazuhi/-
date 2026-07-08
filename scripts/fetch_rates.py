@@ -209,6 +209,19 @@ def parse_mizuho_text(text):
             print("mizuho row", ccy, slots, "-> tts", tts, "ttb", ttb)
         else:
             print("mizuho row skipped (no TTS/TTB published)", ccy, slots)
+    # 「ご参考」セクション: 参考相場（単一値）。例: "> TWD 新台湾ドル 5.05 円"
+    for line in text.splitlines():
+        line = " ".join(line.split())
+        m = re.match(r">?\s*([A-Z]{3})\s*(?:\(\s*100\s*\))?\s+\S+\s+([\d.]+)\s*円", line)
+        if not m:
+            continue
+        ccy = m.group(1)
+        if ccy not in SANE or ccy in rates:
+            continue
+        v = normalize(ccy, float(m.group(2)))
+        if v:
+            rates[ccy] = {"ref": v}
+            print("mizuho ref", ccy, v, "raw:", line[:80])
     return rates
 
 
@@ -249,9 +262,6 @@ def get_mizuho(out, errors):
         try:
             text = fetch(url, timeout=60).decode("utf-8", errors="replace")
             print("--- mizuho via reader", target, "len", len(text))
-            for ln in text.splitlines():
-                if ln.strip():
-                    print("  |", ln[:130])
             rates = parse_mizuho_text(text)
             if len(rates) >= 2:
                 print("mizuho via reader parsed:", rates)

@@ -38,6 +38,12 @@
   .rates td.num{font-family:var(--mono)}
   .rates td.na{color:#b7b2c6;text-align:center}
   .rates td.best{background:var(--best);font-weight:700}
+  .rates td.refv{text-align:center}
+  .reftag{
+    display:inline-block;margin-left:7px;vertical-align:1px;
+    font-family:var(--dot);font-size:10px;letter-spacing:1px;
+    color:#9a6700;background:#fff8c5;border:1px solid #9a6700;padding:0 5px;
+  }
   .legend{font-size:.76rem;color:var(--ink-soft);margin-top:10px;line-height:1.8}
   .legend b{color:var(--ink)}
   .stale{color:#9a6700;font-size:.78rem;margin-top:8px}
@@ -90,6 +96,7 @@
     <p class="legend">
       <b>TTS</b>＝銀行が外貨を売る（円→外貨）レート ／ <b>TTB</b>＝銀行が外貨を買う（外貨→円）レート。
       <span style="background:var(--best);border:1px solid var(--line);padding:0 6px">緑</span> はその行で最も有利なレート（TTS=最安、TTB=最高）。
+      <span class="reftag" style="margin-left:0">参考</span> は銀行が「参考相場」として公表する単一レート（売買別の建値なし・取引制限あり）。
       Wiseの中値は銀行間レートで、実際の取引には別途手数料がかかるため参考値です。
     </p>
     <p class="stale" id="stale" hidden></p>
@@ -101,7 +108,7 @@
       平日 10:15 / 12:05 / 15:05 ごろ（日本時間）に自動取得しています。
       TTS/TTBは通常、毎営業日午前10時ごろに公表される基準レートで、相場急変時には各行が改定することがあります。
       韓国ウォンとベトナムドンは100通貨単位あたりの円で表示しています。「－」はその機関が対象レートを公表していない通貨です。<br>
-      ・<b>みずほ</b>：<a href="https://www.mizuhobank.co.jp/market/index.html" target="_blank" rel="noopener">みずほ銀行公表の外国為替相場一覧（PDF）</a>より取得（韓国ウォン・ベトナムドン・台湾ドルはTTS/TTBの公表対象外）<br>
+      ・<b>みずほ</b>：<a href="https://www.mizuhobank.co.jp/market/index.html" target="_blank" rel="noopener">みずほ銀行公表の外国為替相場一覧（PDF）</a>より取得。台湾ドル・韓国ウォン・ベトナムドンは同PDFの「参考相場」（単一値）を表示<br>
       ・<b>三菱UFJ</b>：<a href="https://www.murc-kawasesouba.jp/fx/" target="_blank" rel="noopener">三菱UFJリサーチ&コンサルティング公表の対顧客電信相場</a>（台湾ドル・ベトナムドンは公表対象外）<br>
       ・<b>三井住友</b>：<a href="https://www.smbc.co.jp/ex/ExchangeServlet?ScreenID=real" target="_blank" rel="noopener">SMBC公表のリアルタイム為替レート</a>（取扱はUSD/EUR/GBPなど。公表相場と異なる場合があります）<br>
       ・<b>Wise</b>：中値（ミッドマーケットレート、公開APIより取得）。<a href="https://wise.com/jp/" target="_blank" rel="noopener">Wise</a>は中値で両替し手数料を別途徴収する方式です。<br>
@@ -162,12 +169,14 @@ fetch("./rates.json?ts="+Date.now(),{cache:"no-store"})
       var bestTtb=ttbVals.length?Math.max.apply(null,ttbVals):null;
       BANKS.forEach(function(b){
         var r=banks[b]&&banks[b].rates&&banks[b].rates[ccy];
-        if(r&&r.tts!=null){
+        if(r&&r.tts!=null&&r.ttb!=null){
           html+='<td class="num'+(ttsVals.length>1&&r.tts===bestTts?' best':'')+'">'+fmt(r.tts,m.unit)+'</td>';
-        }else html+='<td class="na">－</td>';
-        if(r&&r.ttb!=null){
           html+='<td class="num'+(ttbVals.length>1&&r.ttb===bestTtb?' best':'')+'">'+fmt(r.ttb,m.unit)+'</td>';
-        }else html+='<td class="na">－</td>';
+        }else if(r&&r.ref!=null){
+          html+='<td class="num refv" colspan="2">'+fmt(r.ref,m.unit)+'<span class="reftag">参考</span></td>';
+        }else{
+          html+='<td class="na">－</td><td class="na">－</td>';
+        }
       });
       var w=banks.wise&&banks.wise.rates&&banks.wise.rates[ccy];
       html+= w&&w.mid!=null ? '<td class="num">'+fmt(w.mid,m.unit)+'</td>' : '<td class="na">－</td>';
