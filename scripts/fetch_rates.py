@@ -177,24 +177,38 @@ def pdf_text(raw):
 
 
 def parse_mizuho_text(text):
-    """みずほ公表表のテキストからTTS/TTBを抽出。
-    fx-quotation PDF は T.T.S / ACC / T.T.B 列の可能性があるため、
-    3値が単調減少なら 1列目と3列目を採用する。"""
+    """みずほ fx-quotation 表のテキストからTTS/TTBを抽出。
+
+    実際の行形式（reader抽出、値は昇順の5スロット、欠測は -------- ）:
+      USD 米ドル 159.37 161.37 162.37 163.37 165.37
+      →  [現金買, TTB, 仲値, TTS, 現金売]
+      CNY 中国元 -------- 23.56 23.86 24.16 --------
+      KRW (100) 韓国ウォン 9.21 -------- -------- -------- 12.21  (TTS/TTB非公表)
+    スロット2=TTB、スロット4=TTS を採用。存在する数値が昇順でない行は
+    レイアウト変更とみなして捨てる。"""
     rates = {}
     for line in text.splitlines():
-        line = " ".join(line.replace(",", " ").split())
+        line = " ".join(line.split())
         ccy, tail = ccy_of(line)
         if not ccy or ccy in rates:
             continue
-        nums = floats_in(tail)
-        cand = [normalize(ccy, v) for v in nums]
-        cand = [v for v in cand if v is not None]
-        if len(cand) >= 3 and cand[0] > cand[1] > cand[2]:
-            rates[ccy] = {"tts": cand[0], "ttb": cand[2]}
-            print("mizuho row(3col)", ccy, cand[:4], "raw:", line[:110])
-        elif len(cand) >= 2 and cand[0] != cand[1]:
-            rates[ccy] = {"tts": max(cand[0], cand[1]), "ttb": min(cand[0], cand[1])}
-            print("mizuho row(2col)", ccy, cand[:3], "raw:", line[:110])
+        tail = tail.replace("（", "(").replace("）", ")")
+        tail = re.sub(r"\(\s*100\s*\)", " ", tail)
+        toks = re.findall(r"-{3,}|\d+(?:\.\d+)?", tail.replace(",", ""))
+        if len(toks) < 5:
+            continue
+        slots = toks[:5]
+        vals = [None if t.startswith("-") else normalize(ccy, float(t)) for t in slots]
+        present = [v for v in vals if v is not None]
+        if any(v is None for v in present) or present != sorted(present):
+            print("mizuho row rejected (not ascending)", ccy, slots)
+            continue
+        ttb, tts = vals[1], vals[3]
+        if tts is not None and ttb is not None and tts > ttb:
+            rates[ccy] = {"tts": tts, "ttb": ttb}
+            print("mizuho row", ccy, slots, "-> tts", tts, "ttb", ttb)
+        else:
+            print("mizuho row skipped (no TTS/TTB published)", ccy, slots)
     return rates
 
 
@@ -216,25 +230,7 @@ def get_mizuho(out, errors):
                 last = f"{url}: not a PDF"
                 continue
             text = pdf_text(raw)
-            print("mizuho pdf text head:")
-            for ln in text.splitlines()[:30]:
-                print("  |", ln[:110])
-            # 行ごとに全数値をログ（TTS/ACC/TTBの並び確認用）
-            rates = {}
-            for line in text.splitlines():
-                line = " ".join(line.replace(",", " ").split())
-                ccy, tail = ccy_of(line)
-                if not ccy or ccy in rates:
-                    continue
-                nums = floats_in(tail)
-                print("mizuho pdf row", ccy, nums[:6], "raw:", line[:110])
-                cand = [normalize(ccy, v) for v in nums]
-                cand = [v for v in cand if v is not None]
-                if len(cand) >= 3 and cand[0] > cand[2]:
-                    # 想定列: T.T.S / ACC / T.T.B（要ログ確認）
-                    rates[ccy] = {"tts": cand[0], "ttb": cand[2]}
-                elif len(cand) >= 2 and cand[0] != cand[1]:
-                    rates[ccy] = {"tts": max(cand[0], cand[1]), "ttb": min(cand[0], cand[1])}
+            rates = parse_mizuho_text(text)
             if rates:
                 print("mizuho pdf parsed:", rates)
                 out["mizuho"] = rates
@@ -253,7 +249,8 @@ def get_mizuho(out, errors):
         try:
             text = fetch(url, timeout=60).decode("utf-8", errors="replace")
             print("--- mizuho via reader", target, "len", len(text))
-            print("  head:", " / ".join(text.splitlines()[:8])[:300])
+            for ln in text.splitlines()[:70]:
+                print("  |", ln[:120])
             rates = parse_mizuho_text(text)
             if len(rates) >= 2:
                 print("mizuho via reader parsed:", rates)
