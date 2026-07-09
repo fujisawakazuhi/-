@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="米ドル・人民元・ウォンなど8通貨の対円レートを確認し、任意の通貨ペアで金額換算できる無料ツール。">
+<meta name="description" content="米ドル・ユーロ・英ポンド・人民元など10通貨の対円レートを確認し、任意の通貨ペアで金額換算できる無料ツール。">
   <title>JPY為替レート確認・換算Webアプリ</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 shape-rendering=%22crispEdges%22%3E%3Cg fill=%22%23ffd94a%22%3E%3Crect x=%226%22 y=%222%22 width=%224%22 height=%221%22/%3E%3Crect x=%225%22 y=%223%22 width=%226%22 height=%221%22/%3E%3Crect x=%224%22 y=%224%22 width=%228%22 height=%221%22/%3E%3Crect x=%223%22 y=%225%22 width=%2210%22 height=%221%22/%3E%3Crect x=%223%22 y=%226%22 width=%2210%22 height=%221%22/%3E%3Crect x=%222%22 y=%227%22 width=%2212%22 height=%221%22/%3E%3Crect x=%222%22 y=%228%22 width=%2212%22 height=%221%22/%3E%3Crect x=%223%22 y=%229%22 width=%2210%22 height=%221%22/%3E%3Crect x=%223%22 y=%2210%22 width=%2210%22 height=%221%22/%3E%3Crect x=%224%22 y=%2211%22 width=%228%22 height=%221%22/%3E%3Crect x=%225%22 y=%2212%22 width=%226%22 height=%221%22/%3E%3Crect x=%226%22 y=%2213%22 width=%224%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%225%22 y=%225%22 width=%221%22 height=%221%22/%3E%3Crect x=%2210%22 y=%225%22 width=%221%22 height=%221%22/%3E%3Crect x=%226%22 y=%226%22 width=%221%22 height=%221%22/%3E%3Crect x=%229%22 y=%226%22 width=%221%22 height=%221%22/%3E%3Crect x=%227%22 y=%227%22 width=%222%22 height=%221%22/%3E%3Crect x=%225%22 y=%228%22 width=%226%22 height=%221%22/%3E%3Crect x=%227%22 y=%229%22 width=%222%22 height=%221%22/%3E%3Crect x=%225%22 y=%2210%22 width=%226%22 height=%221%22/%3E%3Crect x=%227%22 y=%2211%22 width=%222%22 height=%221%22/%3E%3C/g%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -53,7 +53,7 @@
 
     .hero {
       display: grid;
-      grid-template-columns: 1.4fr 0.9fr;
+      grid-template-columns: 1fr;
       gap: 18px;
       margin-bottom: 20px;
     }
@@ -154,8 +154,14 @@
 
     .hero-side {
       display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       align-content: start;
+      margin-top: 20px;
+    }
+
+    .hero-side .side-head {
+      grid-column: 1 / -1;
     }
 
     .mini-card {
@@ -521,7 +527,8 @@
     @media (max-width: 1040px) {
       .hero,
       .layout,
-      .note-grid {
+      .note-grid,
+      .hero-side {
         grid-template-columns: 1fr;
       }
     }
@@ -605,30 +612,12 @@
         </div>
         <h1>JPY為替レート確認・換算Webアプリ</h1>
         <p>
-          USD / CNY / HKD / VND / IDR / THB / SGD / AUD の対JPYレートを見やすく確認し、
+          USD / EUR / GBP / CNY / HKD / VND / IDR / THB / SGD / AUD の対JPYレートを見やすく確認し、
           任意の通貨ペアで金額換算できます。金額入力欄と換算結果は3桁ごとにカンマ表示です。
         </p>
         <div class="hero-actions">
           <button id="refreshBtn" class="btn-primary">最新レートを取得</button>
           <button id="resetBtn" class="btn-secondary">初期値に戻す</button>
-        </div>
-      </div>
-
-      <div class="panel hero-side">
-        <div class="mini-card">
-          <div class="mini-label">API基準日</div>
-          <div id="sourceDate" class="mini-value">-</div>
-          <div class="mini-sub">APIが返したデータ基準日です。</div>
-        </div>
-        <div class="mini-card">
-          <div class="mini-label">画面更新時刻</div>
-          <div id="lastUpdated" class="mini-value">-</div>
-          <div class="mini-sub">この画面で最後に更新した時刻です。</div>
-        </div>
-        <div class="mini-card">
-          <div class="mini-label">参照先</div>
-          <div class="mini-sub">ExchangeRate-API</div>
-          <a class="source-link" href="https://open.er-api.com/v6/latest/JPY" target="_blank" rel="noopener noreferrer">https://open.er-api.com/v6/latest/JPY</a>
         </div>
       </div>
     </section>
@@ -640,17 +629,6 @@
           <div class="section-caption">例: 1 USD = xxx JPY</div>
         </div>
         <div id="rateGrid" class="rate-grid"></div>
-
-        <div class="source-card">
-          <h3>このレートの出所と性質</h3>
-          <div class="muted">
-            本ツールは <b>ExchangeRate-API</b>（AYR Tech (Pty) Ltd が2010年から運営するレート配信サービス、稼働率99.99%超の実績）の公開レートを表示しています。
-            世界30以上の情報源（各国中央銀行の公表参照レートと商業市場の仲値）を合成した「<b>指標的な仲値（ミッドレート）</b>」で、売値と買値の中間にあたる参考値です。
-            複数の情報源を突き合わせて外れ値の影響を抑えているため、相場水準の把握や試算の目安として実用的です。<br /><br />
-            <b>ご注意</b>：インターバンクの取引レートそのものではなく、銀行の対顧客レート（TTS＝外貨を買う時／TTB＝売る時）でもありません。
-            実際の両替・送金では各銀行が仲値に手数料スプレッドを加減したレートを適用するため、本ツールの表示とは差が生じます。
-          </div>
-        </div>
       </div>
 
       <div class="panel converter-panel">
@@ -713,12 +691,47 @@
       </div>
     </section>
 
+    <section>
+      <div class="panel hero-side">
+        <div class="section-head side-head">
+          <h2>取得情報・参照先</h2>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">API基準日</div>
+          <div id="sourceDate" class="mini-value">-</div>
+          <div class="mini-sub">APIが返したデータ基準日です。</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">画面更新時刻</div>
+          <div id="lastUpdated" class="mini-value">-</div>
+          <div class="mini-sub">この画面で最後に更新した時刻です。</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-label">参照先</div>
+          <div class="mini-sub">ExchangeRate-API</div>
+          <a class="source-link" href="https://open.er-api.com/v6/latest/JPY" target="_blank" rel="noopener noreferrer">https://open.er-api.com/v6/latest/JPY</a>
+        </div>
+        <div class="source-card side-head">
+          <h3>このレートの出所と性質</h3>
+          <div class="muted">
+            本ツールは <b>ExchangeRate-API</b>（AYR Tech (Pty) Ltd が2010年から運営するレート配信サービス、稼働率99.99%超の実績）の公開レートを表示しています。
+            世界30以上の情報源（各国中央銀行の公表参照レートと商業市場の仲値）を合成した「<b>指標的な仲値（ミッドレート）</b>」で、売値と買値の中間にあたる参考値です。
+            複数の情報源を突き合わせて外れ値の影響を抑えているため、相場水準の把握や試算の目安として実用的です。<br /><br />
+            <b>ご注意</b>：インターバンクの取引レートそのものではなく、銀行の対顧客レート（TTS＝外貨を買う時／TTB＝売る時）でもありません。
+            実際の両替・送金では各銀行が仲値に手数料スプレッドを加減したレートを適用するため、本ツールの表示とは差が生じます。
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <script>
     const currencyMeta = {
       JPY: { name: "日本円", symbol: "JPY" },
       USD: { name: "米ドル", symbol: "USD" },
+      EUR: { name: "ユーロ", symbol: "EUR" },
+      GBP: { name: "英ポンド", symbol: "GBP" },
       CNY: { name: "中国元", symbol: "CNY" },
       HKD: { name: "香港ドル", symbol: "HKD" },
       VND: { name: "ベトナムドン", symbol: "VND" },
@@ -728,8 +741,8 @@
       AUD: { name: "豪ドル", symbol: "AUD" }
     };
 
-    const currencyOptions = ["JPY", "USD", "CNY", "HKD", "VND", "IDR", "THB", "SGD", "AUD"];
-    const watchCurrencies = ["USD", "CNY", "HKD", "VND", "IDR", "THB", "SGD", "AUD"];
+    const currencyOptions = ["JPY", "USD", "EUR", "GBP", "CNY", "HKD", "VND", "IDR", "THB", "SGD", "AUD"];
+    const watchCurrencies = ["USD", "EUR", "GBP", "CNY", "HKD", "VND", "IDR", "THB", "SGD", "AUD"];
     const quickAmounts = [1, 10, 100, 1000, 10000, 100000];
     const ratesToJPY = { JPY: 1 };
 
