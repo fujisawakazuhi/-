@@ -66,6 +66,27 @@ def clean_cell(v):
     return m.group(1) if m else v
 
 
+ERA_BASE = {"令和": 2018, "平成": 1988, "昭和": 1925}
+
+
+def norm_date(v):
+    """登録年月日セルをYYYY-MM-DDへ正規化。
+    元データはISO・Excelシリアル値（'45908'等）・和暦（'令和元年9月25日'等）が混在。"""
+    v = v.strip()
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", v):
+        return v
+    if re.match(r"^\d{5}$", v):  # Excelシリアル値（1899-12-30起点の日数）
+        n = int(v)
+        if 20000 <= n <= 60000:  # 1954〜2064年の範囲のみ日付とみなす
+            return (datetime.date(1899, 12, 30) + datetime.timedelta(days=n)).isoformat()
+        return v
+    m = re.match(r"^(令和|平成|昭和)(元|\d+)年(\d+)月(\d+)日$", v)
+    if m:
+        y = ERA_BASE[m.group(1)] + (1 if m.group(2) == "元" else int(m.group(2)))
+        return f"{y:04d}-{int(m.group(3)):02d}-{int(m.group(4)):02d}"
+    return v
+
+
 def parse_reg_xlsx(raw):
     import openpyxl
     wb = openpyxl.load_workbook(io.BytesIO(raw), data_only=True, read_only=True)
@@ -92,6 +113,9 @@ def parse_reg_xlsx(raw):
             if not any(vals):
                 continue
             rec = dict(zip(cols, vals))
+            for k in rec:
+                if "年月日" in k and rec[k]:
+                    rec[k] = norm_date(rec[k])
             no = rec.get("登録番号", "")
             name = next((rec[k] for k in rec if ("名" in k and "法人" not in k) and rec[k]), "")
             for k in ("所管", "業務の種別"):
@@ -190,7 +214,7 @@ def get_registry(stamp, errors):
             changes = []
         changes.insert(0, {"date": stamp, "added": added, "removed": removed})
         with open(CHG_OUT, "w", encoding="utf-8") as f:
-            json.dump(changes[:200], f, ensure_ascii=False, indent=1)
+            json.dump(changes[:2000], f, ensure_ascii=False, indent=1)
         print("registry diff: +", len(added), "-", len(removed))
     elif not prev_exists:
         print("registry: baseline saved (no diff on first run)")
