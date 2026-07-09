@@ -55,7 +55,7 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 18px;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     .panel {
@@ -164,16 +164,28 @@
       grid-column: 1 / -1;
     }
 
-    .hero-meta {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 20px;
-      max-width: 640px;
-    }
-
     .mini-card .hero-actions {
       margin-top: 10px;
+    }
+
+    .hero-main {
+      padding: 14px 20px;
+    }
+
+    .hero-main p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .meta-inline {
+      color: var(--subtext);
+      font-size: 12px;
+    }
+
+    .meta-inline b {
+      color: var(--text);
+      font-weight: 700;
     }
 
     .mini-card {
@@ -550,7 +562,6 @@
         padding: 18px 14px 28px;
       }
 
-      .hero-main,
       .hero-side,
       .rates-panel,
       .converter-panel,
@@ -559,8 +570,7 @@
       }
 
       .rate-grid,
-      .pair-grid,
-      .hero-meta {
+      .pair-grid {
         grid-template-columns: 1fr;
       }
 
@@ -583,8 +593,8 @@
     .bar .crumb{font-family:var(--dot);font-size:12px;color:var(--subtext);display:flex;align-items:center;gap:8px;min-width:0}
     .bar .crumb a{color:var(--subtext)}
     .bar .crumb .cur{color:var(--text)}
-    .page{padding-top:24px}
-    h1{font-family:var(--dot);font-size:26px !important;font-weight:400;letter-spacing:1px;text-shadow:2px 2px 0 var(--accent-soft)}
+    .page{padding-top:14px}
+    h1{font-family:var(--dot);font-size:19px !important;font-weight:400;letter-spacing:1px;text-shadow:2px 2px 0 var(--accent-soft)}
     .section-head h2{font-family:var(--dot);font-weight:400;letter-spacing:1px}
     .panel{backdrop-filter:none;border:3px solid var(--text);box-shadow:var(--shadow)}
     .rate-card,.mini-card,.source-card,.result-card,.helper-card{border:2px solid var(--text);border-radius:0;box-shadow:3px 3px 0 rgba(58,51,82,.12)}
@@ -618,28 +628,9 @@
   <div class="page">
     <section class="hero">
       <div class="panel hero-main">
-        <div class="badge-row">
-          <span class="badge">JPYベース換算</span>
-          <span class="badge">更新ボタンで再取得</span>
-          <span class="badge">3桁区切り対応</span>
-        </div>
         <h1>JPY為替レート確認・換算Webアプリ</h1>
-        <p>
-          USD / EUR / GBP / CNY / HKD / VND / IDR / THB / SGD / AUD の対JPYレートを見やすく確認し、
-          任意の通貨ペアで金額換算できます。金額入力欄と換算結果は3桁ごとにカンマ表示です。
-        </p>
-        <div class="hero-meta">
-          <div class="mini-card">
-            <div class="mini-label">API基準日</div>
-            <div id="sourceDate" class="mini-value">-</div>
-            <div class="mini-sub">APIが返したデータ基準日です。</div>
-          </div>
-          <div class="mini-card">
-            <div class="mini-label">画面更新時刻</div>
-            <div id="lastUpdated" class="mini-value">-</div>
-            <div class="mini-sub">この画面で最後に更新した時刻です。</div>
-          </div>
-        </div>
+        <p>USD / EUR / GBP / CNY / HKD / VND / IDR / THB / SGD / AUD の対円レート確認と通貨換算（3桁カンマ表示対応）。</p>
+        <p class="meta-inline">API基準日 <b id="sourceDate">-</b>　／　画面更新 <b id="lastUpdated">-</b></p>
       </div>
     </section>
 
