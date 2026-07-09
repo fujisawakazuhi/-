@@ -5,7 +5,7 @@
 ## 情報ページ（自動更新）
 - [資金移動業デイリーニュース](https://fujisawakazuhi.github.io/-/fund-transfer/daily-news/): 資金決済法・犯収法・金融庁動向・海外送金・ステーブルコイン等のニュースを1日1ポストで記録
 - [銀行為替レート比較](https://fujisawakazuhi.github.io/-/tools/bankrate/): みずほ・三菱UFJ・三井住友の公表TTS/TTBとWiseの中値を主要7通貨で比較（平日自動更新）
-- [資金移動業者 登録一覧ウォッチャー](https://fujisawakazuhi.github.io/-/fund-transfer/registry/): 金融庁公表の登録一覧を毎営業日チェックし、新規登録・登録抹消を差分記録
+- [資金移動業者 登録一覧ウォッチャー](https://fujisawakazuhi.github.io/-/fund-transfer/registry/): 金融庁公表の登録一覧を毎営業日チェックし、一覧の変動（追加・消失）を差分記録
 - [行政処分アーカイブ](https://fujisawakazuhi.github.io/-/fund-transfer/shobun/): 金融庁の報道発表から資金決済関連の行政処分を自動収集
 
 ## ツール（ブラウザ内で完結）

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="資金移動業者登録一覧の変更履歴アーカイブ。新規登録・登録抹消の検知結果をウォッチ開始以降すべて時系列で蓄積。">
+<meta name="description" content="資金移動業者登録一覧の変更履歴アーカイブ。一覧への追加・一覧からの消失の自動検知結果をウォッチ開始以降すべて時系列で蓄積。">
 <title>変更履歴アーカイブ | 資金移動業者 登録一覧ウォッチャー</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 shape-rendering=%22crispEdges%22%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%222%22 y=%222%22 width=%2212%22 height=%2212%22/%3E%3C/g%3E%3Cg fill=%22%23fdfcf8%22%3E%3Crect x=%223%22 y=%223%22 width=%2210%22 height=%2210%22/%3E%3C/g%3E%3Cg fill=%22%233a3352%22%3E%3Crect x=%224%22 y=%225%22 width=%226%22 height=%221%22/%3E%3Crect x=%224%22 y=%228%22 width=%226%22 height=%221%22/%3E%3Crect x=%224%22 y=%2211%22 width=%224%22 height=%221%22/%3E%3C/g%3E%3Cg fill=%22%23ffd94a%22%3E%3Crect x=%2211%22 y=%224%22 width=%222%22 height=%225%22/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +37,8 @@
   .chg li .tag{font-weight:700;margin-right:6px}
   .chg li .sub{display:block;font-size:.78rem;color:var(--ink-soft)}
   .nochg{font-size:.9rem;color:var(--ink-soft);padding:12px 4px;line-height:1.9}
+  .warnbox{background:#fff7dd;border:2px solid #c9a227;box-shadow:3px 3px 0 rgba(58,51,82,.12);padding:10px 14px;font-size:.85rem;line-height:1.9;margin-top:14px;color:var(--ink)}
+  .warnbox b{color:#8a6100}
   .backlink{display:inline-block;margin-top:12px;font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);background:#fff;border:2px solid var(--ink);padding:6px 14px;text-decoration:none;box-shadow:3px 3px 0 rgba(58,51,82,.15)}
   .backlink:hover{background:var(--accent-soft)}
   .note{font-size:.78rem;color:var(--ink-soft);line-height:1.9;margin-top:14px}
@@ -56,7 +58,7 @@
 <div class="page-head">
   <div class="inner">
     <h1>📜 変更履歴アーカイブ</h1>
-    <p class="desc">資金移動業者登録一覧の新規登録・登録抹消を、ウォッチ開始（2026年7月）以降すべて時系列で蓄積しています。</p>
+    <p class="desc">資金移動業者登録一覧の変動（一覧への追加・一覧からの消失）を、ウォッチ開始（2026年7月）以降すべて時系列で蓄積しています。</p>
     <a class="backlink" href="../">← 登録一覧ウォッチャーへ戻る</a>
   </div>
 </div>
@@ -66,9 +68,9 @@
   <section class="tool-card">
     <span class="updated" id="updated">読み込み中…</span>
     <div id="chgArea"><div class="loading">LOADING...</div></div>
+    <div class="warnbox">⚠️ 金融庁公表の一覧を機械的に比較した自動検知の結果であり、行政上の登録抹消・取消し等を断定するものではありません。表記変更や取得エラーでも差分になることがあります。<b>正確な情報は必ず金融庁の原典をご確認ください。</b></div>
     <p class="note">
       出典：<a href="https://www.fsa.go.jp/menkyo/menkyo.html" target="_blank" rel="noopener">金融庁「免許・許可・登録等を受けている業者一覧」</a>の資金移動業者一覧を毎営業日チェック。
-      正確な情報は必ず金融庁の原典をご確認ください。
     </p>
     <a class="backlink" href="../">← 登録一覧ウォッチャーへ戻る</a>
   </section>
@@ -126,14 +128,14 @@ fetch("../changes.json?ts="+Date.now(),{cache:"no-store"})
     (chs||[]).forEach(function(ch){n+=(ch.added||[]).length+(ch.removed||[]).length});
     $("updated").textContent="記録: "+days+" 日分・"+n+" 件";
     if(!chs.length){
-      area.innerHTML='<div class="nochg">ウォッチ開始以降、変更はまだ検知されていません。（毎営業日チェック中。新規登録・登録抹消があった日だけ、ここに記録が増えていきます）</div>';
+      area.innerHTML='<div class="nochg">ウォッチ開始以降、一覧の変動はまだ検知されていません。（毎営業日チェック中。一覧に追加・消失があった日だけ、ここに記録が増えていきます）</div>';
       return;
     }
     chs.forEach(function(ch){
       var div=document.createElement("div"); div.className="chg";
       var lis="";
-      (ch.added||[]).forEach(function(op){ lis+='<li class="add">'+opLine(op,"＋ 新規登録")+"</li>"; });
-      (ch.removed||[]).forEach(function(op){ lis+='<li class="rem">'+opLine(op,"－ 登録抹消")+"</li>"; });
+      (ch.added||[]).forEach(function(op){ lis+='<li class="add">'+opLine(op,"＋ 一覧に追加")+"</li>"; });
+      (ch.removed||[]).forEach(function(op){ lis+='<li class="rem">'+opLine(op,"－ 一覧から消失")+"</li>"; });
       div.innerHTML='<div class="d">'+esc(ch.date)+"</div><ul>"+lis+"</ul>";
       area.appendChild(div);
     });
