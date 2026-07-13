@@ -19,11 +19,12 @@
   }
   body{padding-bottom:60px}
   .page-head{background:transparent}
-  .page-head .inner{max-width:960px;margin:0 auto;padding:22px 20px}
+  .page-head .inner{max-width:1560px;margin:0 auto;padding:22px 20px}
   .page-head h1{font-family:var(--dot);font-size:24px;font-weight:400;letter-spacing:1px;line-height:1.3;color:var(--ink);text-shadow:2px 2px 0 var(--accent-soft)}
   .page-head .desc{color:var(--ink-soft);font-size:14px;margin-top:6px}
 
-  main.wrap{max-width:960px;padding-top:0}
+  /* 表の左右スクロールを避けるため、PCでは画面幅いっぱいを使う */
+  main.wrap{max-width:1560px;width:100%;padding-top:0}
   .tool-card{background:rgba(255,255,255,.95);border:3px solid var(--ink);box-shadow:var(--hard);padding:20px;margin-top:20px}
   .tool-card h2{font-family:var(--dot);font-size:15px;letter-spacing:1px;margin-bottom:12px}
   .updated{font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);background:var(--accent-soft);border:2px solid var(--ink);display:inline-block;padding:4px 12px;margin-bottom:6px}
@@ -176,7 +177,8 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
   .then(function(d){
     $("updated").textContent="更新: "+(d.updated||"未取得");
     $("checked").textContent="最終チェック: "+(d.updated||"未取得")+"（このときの一覧と比較しています）";
-    var pref=["所管","登録番号","登録年月日","資金移動業者名","業務の種別"];
+    // 所管は重要度が低いので一番右に
+    var pref=["登録番号","登録年月日","資金移動業者名","業務の種別","所管"];
     columns=pref.filter(function(c){return (d.columns||[]).indexOf(c)>=0});
     if(!columns.length)columns=(d.columns||[]).slice(0,6);
     allOps=d.operators||[];
