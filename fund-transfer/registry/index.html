@@ -37,8 +37,14 @@
   .chg li.add .tag{color:var(--addln)}
   .chg li.rem{background:var(--rembg);border-color:var(--remln)}
   .chg li.rem .tag{color:var(--remln)}
+  .chg li.mod{background:#fff7dd;border-color:#c9a227}
+  .chg li.mod .tag{color:#8a6100}
   .chg li .tag{font-weight:700;margin-right:6px}
   .chg li .sub{display:block;font-size:.78rem;color:var(--ink-soft)}
+  .kchip{display:inline-block;font-size:.75rem;font-weight:700;line-height:1.5;padding:0 8px;border:2px solid;margin:1px 4px 1px 0;white-space:nowrap}
+  .kchip.k1{background:#ffe9e6;border-color:#cf222e;color:#a40e26}
+  .kchip.k2{background:#e7f6e3;border-color:#3f9a50;color:#2c6e38}
+  .kchip.k3{background:#e3edfb;border-color:#3963c9;color:#274a9c}
   .nochg{font-size:.9rem;color:var(--ink-soft);padding:12px 4px;line-height:1.9}
   .morelink{display:inline-block;margin-top:12px;font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);background:#fff;border:2px solid var(--ink);padding:6px 14px;text-decoration:none;box-shadow:3px 3px 0 rgba(58,51,82,.15)}
   .morelink:hover{background:var(--accent-soft)}
@@ -68,7 +74,7 @@
 <div class="page-head">
   <div class="inner">
     <h1>🗂️ 資金移動業者 登録一覧ウォッチャー</h1>
-    <p class="desc">金融庁公表の登録一覧を毎営業日チェックし、一覧の変動（追加・消失）を検知して記録します。</p>
+    <p class="desc">金融庁公表の登録一覧を毎営業日チェックし、一覧の変動（追加・消失・第一種/第二種/第三種の種別変更）を検知して記録します。</p>
   </div>
 </div>
 
@@ -136,6 +142,14 @@ function isoDate(v){
   return v;
 }
 
+// 「第一種・第二種」→ 色付きチップ
+function kchips(v){
+  var cls={"第一種":"k1","第二種":"k2","第三種":"k3"};
+  return String(v||"").split("・").filter(Boolean).map(function(t){
+    return '<span class="kchip '+(cls[t]||"")+'">'+esc(t)+"</span>";
+  }).join("");
+}
+
 function renderTable(filter){
   var tb=$("tbody"); tb.innerHTML="";
   var f=norm((filter||"").trim());
@@ -146,6 +160,7 @@ function renderTable(filter){
     var tr=document.createElement("tr");
     tr.innerHTML=columns.map(function(c){
       var v=op[c]||"";
+      if(c==="業務の種別")return "<td>"+kchips(v)+"</td>";
       if(c.indexOf("年月日")>=0)v=isoDate(v);
       return "<td>"+esc(v)+"</td>";
     }).join("");
@@ -159,7 +174,9 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
   .then(function(r){return r.json()})
   .then(function(d){
     $("updated").textContent="更新: "+(d.updated||"未取得");
-    columns=(d.columns||[]).slice(0,6);
+    var pref=["所管","登録番号","登録年月日","資金移動業者名","業務の種別"];
+    columns=pref.filter(function(c){return (d.columns||[]).indexOf(c)>=0});
+    if(!columns.length)columns=(d.columns||[]).slice(0,6);
     allOps=d.operators||[];
     if(!columns.length&&allOps.length)columns=Object.keys(allOps[0]).slice(0,6);
     // 登録年月日の新しい順に表示
@@ -169,18 +186,29 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
   })
   .catch(function(){ $("updated").textContent="データ未取得（初回実行前）"; });
 
-// 業者レコード → 変更履歴の表示行
-function opLine(op,tag){
-  var name="",no="",kan="",dt="";
+// 業者レコード → 名称・登録番号等の抽出
+function opInfo(op){
+  var o={name:"",no:"",kan:"",dt:"",kind:""};
   Object.keys(op).forEach(function(k){
-    if(!name&&(k.indexOf("業者名")>=0||k.indexOf("名称")>=0||k.indexOf("商号")>=0))name=op[k];
-    if(!no&&k.indexOf("登録番号")>=0)no=op[k];
-    if(!kan&&k.indexOf("所管")>=0)kan=op[k];
-    if(!dt&&k.indexOf("年月日")>=0)dt=isoDate(op[k]);
+    if(!o.name&&(k.indexOf("業者名")>=0||k.indexOf("名称")>=0||k.indexOf("商号")>=0))o.name=op[k];
+    if(!o.no&&k.indexOf("登録番号")>=0)o.no=op[k];
+    if(!o.kan&&k.indexOf("所管")>=0)o.kan=op[k];
+    if(!o.dt&&k.indexOf("年月日")>=0)o.dt=isoDate(op[k]);
+    if(!o.kind&&k.indexOf("種別")>=0&&/第[一二三]種/.test(op[k]||""))o.kind=op[k];
   });
-  var sub=[no,kan,dt&&("登録日 "+dt)].filter(Boolean).join("　");
-  return '<span class="tag">'+tag+'</span>'+esc(name||no||"（名称不明）")
+  return o;
+}
+function opLine(op,tag){
+  var o=opInfo(op);
+  var sub=[o.no,o.kan,o.kind,o.dt&&("登録日 "+o.dt)].filter(Boolean).join("　");
+  return '<span class="tag">'+tag+'</span>'+esc(o.name||o.no||"（名称不明）")
     +(sub?'<span class="sub">'+esc(sub)+"</span>":"");
+}
+function modLine(m){
+  var o=opInfo(m.op||{});
+  return '<span class="tag">～ 種別変更</span>'+esc(o.name||o.no||"（名称不明）")
+    +'<span class="sub">'+esc([o.no,o.kan].filter(Boolean).join("　"))
+    +"　"+esc(m.old||"？")+" → "+esc(m.new||"？")+"</span>";
 }
 
 fetch("./changes.json?ts="+Date.now(),{cache:"no-store"})
@@ -192,7 +220,7 @@ fetch("./changes.json?ts="+Date.now(),{cache:"no-store"})
     var limStr=lim.toISOString().slice(0,10);
     var recent=(chs||[]).filter(function(ch){return String(ch.date||"")>=limStr});
     if(!recent.length){
-      area.innerHTML='<div class="nochg">直近3カ月に一覧の変動は検知されていません。（毎営業日チェック中。一覧に追加・消失があった日だけ、ここに記録されます）</div>';
+      area.innerHTML='<div class="nochg">直近3カ月に一覧の変動は検知されていません。（毎営業日チェック中。追加・消失・種別変更があった日だけ、ここに記録されます）</div>';
       return;
     }
     recent.forEach(function(ch){
@@ -200,6 +228,7 @@ fetch("./changes.json?ts="+Date.now(),{cache:"no-store"})
       var lis="";
       (ch.added||[]).forEach(function(op){ lis+='<li class="add">'+opLine(op,"＋ 一覧に追加")+"</li>"; });
       (ch.removed||[]).forEach(function(op){ lis+='<li class="rem">'+opLine(op,"－ 一覧から消失")+"</li>"; });
+      (ch.modified||[]).forEach(function(m){ lis+='<li class="mod">'+modLine(m)+"</li>"; });
       div.innerHTML='<div class="d">'+esc(ch.date)+"</div><ul>"+lis+"</ul>";
       area.appendChild(div);
     });

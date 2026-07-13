@@ -34,6 +34,8 @@
   .chg li.add .tag{color:var(--addln)}
   .chg li.rem{background:var(--rembg);border-color:var(--remln)}
   .chg li.rem .tag{color:var(--remln)}
+  .chg li.mod{background:#fff7dd;border-color:#c9a227}
+  .chg li.mod .tag{color:#8a6100}
   .chg li .tag{font-weight:700;margin-right:6px}
   .chg li .sub{display:block;font-size:.78rem;color:var(--ink-soft)}
   .nochg{font-size:.9rem;color:var(--ink-soft);padding:12px 4px;line-height:1.9}
@@ -58,7 +60,7 @@
 <div class="page-head">
   <div class="inner">
     <h1>📜 変更履歴アーカイブ</h1>
-    <p class="desc">資金移動業者登録一覧の変動（一覧への追加・一覧からの消失）を、ウォッチ開始（2026年7月）以降すべて時系列で蓄積しています。</p>
+    <p class="desc">資金移動業者登録一覧の変動（一覧への追加・一覧からの消失・種別変更）を、ウォッチ開始（2026年7月）以降すべて時系列で蓄積しています。</p>
     <a class="backlink" href="../">← 登録一覧ウォッチャーへ戻る</a>
   </div>
 </div>
@@ -106,17 +108,28 @@ function isoDate(v){
   return v;
 }
 
-function opLine(op,tag){
-  var name="",no="",kan="",dt="";
+function opInfo(op){
+  var o={name:"",no:"",kan:"",dt:"",kind:""};
   Object.keys(op).forEach(function(k){
-    if(!name&&(k.indexOf("業者名")>=0||k.indexOf("名称")>=0||k.indexOf("商号")>=0))name=op[k];
-    if(!no&&k.indexOf("登録番号")>=0)no=op[k];
-    if(!kan&&k.indexOf("所管")>=0)kan=op[k];
-    if(!dt&&k.indexOf("年月日")>=0)dt=isoDate(op[k]);
+    if(!o.name&&(k.indexOf("業者名")>=0||k.indexOf("名称")>=0||k.indexOf("商号")>=0))o.name=op[k];
+    if(!o.no&&k.indexOf("登録番号")>=0)o.no=op[k];
+    if(!o.kan&&k.indexOf("所管")>=0)o.kan=op[k];
+    if(!o.dt&&k.indexOf("年月日")>=0)o.dt=isoDate(op[k]);
+    if(!o.kind&&k.indexOf("種別")>=0&&/第[一二三]種/.test(op[k]||""))o.kind=op[k];
   });
-  var sub=[no,kan,dt&&("登録日 "+dt)].filter(Boolean).join("　");
-  return '<span class="tag">'+tag+'</span>'+esc(name||no||"（名称不明）")
+  return o;
+}
+function opLine(op,tag){
+  var o=opInfo(op);
+  var sub=[o.no,o.kan,o.kind,o.dt&&("登録日 "+o.dt)].filter(Boolean).join("　");
+  return '<span class="tag">'+tag+'</span>'+esc(o.name||o.no||"（名称不明）")
     +(sub?'<span class="sub">'+esc(sub)+"</span>":"");
+}
+function modLine(m){
+  var o=opInfo(m.op||{});
+  return '<span class="tag">～ 種別変更</span>'+esc(o.name||o.no||"（名称不明）")
+    +'<span class="sub">'+esc([o.no,o.kan].filter(Boolean).join("　"))
+    +"　"+esc(m.old||"？")+" → "+esc(m.new||"？")+"</span>";
 }
 
 fetch("../changes.json?ts="+Date.now(),{cache:"no-store"})
@@ -125,10 +138,10 @@ fetch("../changes.json?ts="+Date.now(),{cache:"no-store"})
     var area=$("chgArea"); area.innerHTML="";
     var days=(chs||[]).length;
     var n=0;
-    (chs||[]).forEach(function(ch){n+=(ch.added||[]).length+(ch.removed||[]).length});
+    (chs||[]).forEach(function(ch){n+=(ch.added||[]).length+(ch.removed||[]).length+(ch.modified||[]).length});
     $("updated").textContent="記録: "+days+" 日分・"+n+" 件";
     if(!chs.length){
-      area.innerHTML='<div class="nochg">ウォッチ開始以降、一覧の変動はまだ検知されていません。（毎営業日チェック中。一覧に追加・消失があった日だけ、ここに記録が増えていきます）</div>';
+      area.innerHTML='<div class="nochg">ウォッチ開始以降、一覧の変動はまだ検知されていません。（毎営業日チェック中。追加・消失・種別変更があった日だけ、ここに記録が増えていきます）</div>';
       return;
     }
     chs.forEach(function(ch){
@@ -136,6 +149,7 @@ fetch("../changes.json?ts="+Date.now(),{cache:"no-store"})
       var lis="";
       (ch.added||[]).forEach(function(op){ lis+='<li class="add">'+opLine(op,"＋ 一覧に追加")+"</li>"; });
       (ch.removed||[]).forEach(function(op){ lis+='<li class="rem">'+opLine(op,"－ 一覧から消失")+"</li>"; });
+      (ch.modified||[]).forEach(function(m){ lis+='<li class="mod">'+modLine(m)+"</li>"; });
       div.innerHTML='<div class="d">'+esc(ch.date)+"</div><ul>"+lis+"</ul>";
       area.appendChild(div);
     });

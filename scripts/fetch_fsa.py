@@ -56,7 +56,9 @@ def links_of(html, base_url):
 
 # ---------------- 資金移動業者登録一覧 ----------------
 
-SCHEMA = 2
+# 3: 業務の種別を第一種/第二種/第三種のマーク列から正しく取得するようになった
+#    （既存データの種別値が全社変わるため、ベースラインを取り直して誤検知を防ぐ）
+SCHEMA = 3
 
 
 def clean_cell(v):
@@ -102,35 +104,50 @@ def parse_reg_xlsx(raw):
         if hi is None:
             continue
         hdr = rows[hi]
-        # DEBUG: dump raw header area and sample data rows to understand
-        # how 業務の種別 (第一種/第二種/第三種) is laid out
-        print("DEBUG sheet:", ws.title, "header row idx:", hi)
-        for i in range(max(0, hi - 2), min(len(rows), hi + 6)):
-            print("DEBUG row", i, repr(rows[i]))
-        keep = [j for j, h in enumerate(hdr) if h]
-        cols = [hdr[j] for j in keep]
-        print("registry sheet:", ws.title, "columns:", cols)
+        # 業務の種別はヘッダーが3列に結合され、次行に「第一種/第二種/第三種」の
+        # サブヘッダー、データ行は該当する列に○が付く形式
+        type_cols = {}  # 列index -> 種別ラベル
+        data_start = hi + 1
+        if hi + 1 < len(rows):
+            for j, v in enumerate(rows[hi + 1]):
+                if re.fullmatch(r"第[一二三]種", v.strip()):
+                    type_cols[j] = v.strip()
+            if type_cols:
+                data_start = hi + 2
+        keep = [j for j, h in enumerate(hdr) if h and j not in type_cols]
+        cols = [hdr[j] for j in keep if hdr[j] != "業務の種別"]
+        keep = [j for j in keep if hdr[j] != "業務の種別"] if type_cols else keep
+        if not type_cols:
+            cols = [hdr[j] for j in keep]
+        cols_out = cols + (["業務の種別"] if type_cols else [])
+        print("registry sheet:", ws.title, "columns:", cols_out,
+              "type_cols:", type_cols)
         if not columns:
-            columns = cols
-        cur = {}  # 所管・業務の種別のセクション値を引き継ぐ
-        for row in rows[hi + 1:]:
+            columns = cols_out
+        fill_keys = ("所管",) if type_cols else ("所管", "業務の種別")
+        cur = {}  # 所管等のセクション値を引き継ぐ
+        for row in rows[data_start:]:
             vals = [row[j] if j < len(row) else "" for j in keep]
-            if not any(vals):
+            marks = [lbl for j, lbl in sorted(type_cols.items())
+                     if (row[j] if j < len(row) else "").strip()]
+            if not any(vals) and not marks:
                 continue
             rec = dict(zip(cols, vals))
+            if type_cols:
+                rec["業務の種別"] = "・".join(marks)
             for k in rec:
                 if "年月日" in k and rec[k]:
                     rec[k] = norm_date(rec[k])
             no = rec.get("登録番号", "")
             name = next((rec[k] for k in rec if ("名" in k and "法人" not in k) and rec[k]), "")
-            for k in ("所管", "業務の種別"):
+            for k in fill_keys:
                 if rec.get(k):
                     rec[k] = re.sub(r"【[^】]*】", "", rec[k]).strip()
                     cur[k] = rec[k]
             if not no and not name:
                 continue  # 種別見出し行など
-            for k in ("所管", "業務の種別"):
-                if k in cols and not rec.get(k):
+            for k in fill_keys:
+                if k in cols_out and not rec.get(k):
                     rec[k] = cur.get(k, "")
             ops.append(rec)
     return columns, ops
@@ -211,16 +228,25 @@ def get_registry(stamp, errors):
     old_keys = {rec_key(r): r for r in prev_ops}
     added = [new_keys[k] for k in new_keys if k not in old_keys]
     removed = [old_keys[k] for k in old_keys if k not in new_keys]
-    if prev_exists and (added or removed):
+    # 既存業者の「業務の種別」変更（第二種→第一種の追加登録など）も検知
+    modified = []
+    for k in new_keys:
+        if k in old_keys:
+            o, n = old_keys[k].get("業務の種別", ""), new_keys[k].get("業務の種別", "")
+            if o and n and o != n:
+                modified.append({"op": new_keys[k], "field": "業務の種別",
+                                 "old": o, "new": n})
+    if prev_exists and (added or removed or modified):
         try:
             with open(CHG_OUT, encoding="utf-8") as f:
                 changes = json.load(f)
         except Exception:
             changes = []
-        changes.insert(0, {"date": stamp, "added": added, "removed": removed})
+        changes.insert(0, {"date": stamp, "added": added, "removed": removed,
+                           "modified": modified})
         with open(CHG_OUT, "w", encoding="utf-8") as f:
             json.dump(changes[:2000], f, ensure_ascii=False, indent=1)
-        print("registry diff: +", len(added), "-", len(removed))
+        print("registry diff: +", len(added), "-", len(removed), "~", len(modified))
     elif not prev_exists:
         print("registry: baseline saved (no diff on first run)")
 
