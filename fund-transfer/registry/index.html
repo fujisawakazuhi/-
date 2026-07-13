@@ -82,6 +82,7 @@
 
   <section class="tool-card">
     <h2>🔔 直近3カ月の一覧の変動</h2>
+    <span class="updated" id="checked">読み込み中…</span>
     <div id="chgArea"><div class="loading">LOADING...</div></div>
     <a class="morelink" href="./history/">📜 すべての変更履歴を見る →</a>
   </section>
@@ -174,6 +175,7 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
   .then(function(r){return r.json()})
   .then(function(d){
     $("updated").textContent="更新: "+(d.updated||"未取得");
+    $("checked").textContent="最終チェック: "+(d.updated||"未取得")+"（このときの一覧と比較しています）";
     var pref=["所管","登録番号","登録年月日","資金移動業者名","業務の種別"];
     columns=pref.filter(function(c){return (d.columns||[]).indexOf(c)>=0});
     if(!columns.length)columns=(d.columns||[]).slice(0,6);
@@ -184,7 +186,10 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
     $("thead").innerHTML="<tr>"+columns.map(function(c){return "<th>"+esc(c)+"</th>"}).join("")+"</tr>";
     renderTable("");
   })
-  .catch(function(){ $("updated").textContent="データ未取得（初回実行前）"; });
+  .catch(function(){
+    $("updated").textContent="データ未取得（初回実行前）";
+    $("checked").textContent="データ未取得（初回実行前）";
+  });
 
 // 業者レコード → 名称・登録番号等の抽出
 function opInfo(op){
@@ -229,7 +234,7 @@ fetch("./changes.json?ts="+Date.now(),{cache:"no-store"})
       (ch.added||[]).forEach(function(op){ lis+='<li class="add">'+opLine(op,"＋ 一覧に追加")+"</li>"; });
       (ch.removed||[]).forEach(function(op){ lis+='<li class="rem">'+opLine(op,"－ 一覧から消失")+"</li>"; });
       (ch.modified||[]).forEach(function(m){ lis+='<li class="mod">'+modLine(m)+"</li>"; });
-      div.innerHTML='<div class="d">'+esc(ch.date)+"</div><ul>"+lis+"</ul>";
+      div.innerHTML='<div class="d">検知日 '+esc(ch.date)+"</div><ul>"+lis+"</ul>";
       area.appendChild(div);
     });
   })

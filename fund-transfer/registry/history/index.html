@@ -150,7 +150,7 @@ fetch("../changes.json?ts="+Date.now(),{cache:"no-store"})
       (ch.added||[]).forEach(function(op){ lis+='<li class="add">'+opLine(op,"＋ 一覧に追加")+"</li>"; });
       (ch.removed||[]).forEach(function(op){ lis+='<li class="rem">'+opLine(op,"－ 一覧から消失")+"</li>"; });
       (ch.modified||[]).forEach(function(m){ lis+='<li class="mod">'+modLine(m)+"</li>"; });
-      div.innerHTML='<div class="d">'+esc(ch.date)+"</div><ul>"+lis+"</ul>";
+      div.innerHTML='<div class="d">検知日 '+esc(ch.date)+"</div><ul>"+lis+"</ul>";
       area.appendChild(div);
     });
   })
