@@ -177,8 +177,7 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
   .then(function(d){
     $("updated").textContent="更新: "+(d.updated||"未取得");
     $("checked").textContent="最終チェック: "+(d.updated||"未取得")+"（このときの一覧と比較しています）";
-    // 所管は重要度が低いので一番右に
-    var pref=["登録番号","登録年月日","資金移動業者名","業務の種別","所管"];
+    var pref=["資金移動業者名","業務の種別","登録番号","登録年月日"];
     columns=pref.filter(function(c){return (d.columns||[]).indexOf(c)>=0});
     if(!columns.length)columns=(d.columns||[]).slice(0,6);
     allOps=d.operators||[];
