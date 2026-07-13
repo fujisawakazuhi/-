@@ -102,6 +102,11 @@ def parse_reg_xlsx(raw):
         if hi is None:
             continue
         hdr = rows[hi]
+        # DEBUG: dump raw header area and sample data rows to understand
+        # how 業務の種別 (第一種/第二種/第三種) is laid out
+        print("DEBUG sheet:", ws.title, "header row idx:", hi)
+        for i in range(max(0, hi - 2), min(len(rows), hi + 6)):
+            print("DEBUG row", i, repr(rows[i]))
         keep = [j for j, h in enumerate(hdr) if h]
         cols = [hdr[j] for j in keep]
         print("registry sheet:", ws.title, "columns:", cols)
