@@ -98,7 +98,7 @@
       <table class="ops"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
     </div>
     <p class="note">
-      登録年月日の新しい順に表示しています。
+      第一種を扱う業者を先頭に、以下は登録年月日の新しい順に表示しています。
       出典：<a href="https://www.fsa.go.jp/menkyo/menkyo.html" target="_blank" rel="noopener">金融庁「免許・許可・登録等を受けている業者一覧」</a>の資金移動業者一覧。
       平日朝に自動取得しています。
     </p>
@@ -182,8 +182,13 @@ fetch("./operators.json?ts="+Date.now(),{cache:"no-store"})
     if(!columns.length)columns=(d.columns||[]).slice(0,6);
     allOps=d.operators||[];
     if(!columns.length&&allOps.length)columns=Object.keys(allOps[0]).slice(0,6);
-    // 登録年月日の新しい順に表示
-    allOps.sort(function(a,b){return isoDate(b["登録年月日"]).localeCompare(isoDate(a["登録年月日"]))});
+    // 第一種を扱う業者を先頭に、それ以外は登録年月日の新しい順
+    allOps.sort(function(a,b){
+      var k1a=(a["業務の種別"]||"").indexOf("第一種")>=0?0:1;
+      var k1b=(b["業務の種別"]||"").indexOf("第一種")>=0?0:1;
+      if(k1a!==k1b)return k1a-k1b;
+      return isoDate(b["登録年月日"]).localeCompare(isoDate(a["登録年月日"]));
+    });
     $("thead").innerHTML="<tr>"+columns.map(function(c){return "<th>"+esc(c)+"</th>"}).join("")+"</tr>";
     renderTable("");
   })
