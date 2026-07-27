@@ -1,0 +1,145 @@
+/* ============================================================
+   shiho.css — 司法試験 暗記シート（sakura.css を前提に上乗せ）
+   .k = 赤字＝暗記対象。既定は伏せ字。押すと答えが出る。
+   ============================================================ */
+
+/* ---- 暗記ポイント（赤シート）---- */
+.k{
+  display:inline;
+  cursor:pointer;
+  border-radius:2px;
+  padding:0 1px;
+  background:#f6bed3;
+  color:transparent;
+  box-shadow:inset 0 -2px 0 #e0679d;
+  transition:background .12s linear;
+  -webkit-tap-highlight-color:transparent;
+}
+.k *{color:inherit}
+.k::selection{background:#f6bed3;color:transparent}
+.k:hover{background:#f3a9c5}
+.k.on{
+  background:#fff0f5;
+  color:#d61046;
+  font-weight:700;
+  box-shadow:inset 0 -2px 0 #f5a8c8;
+}
+.k.on::selection{background:#ffd6e5;color:#d61046}
+@media (prefers-reduced-motion:reduce){.k{transition:none}}
+
+/* 判例引用 */
+.cite{font-size:.88em;color:#6d6685;white-space:nowrap}
+/* 条数 */
+.art{color:#16233d;font-weight:700}
+
+/* ---- 見出し ---- */
+h2.chap{
+  font-family:var(--dot);font-size:19px;letter-spacing:1px;color:var(--ink);
+  border:3px solid var(--ink);box-shadow:var(--hard);
+  background:var(--pink-soft);
+  padding:10px 14px;margin:38px 0 18px;line-height:1.5;
+}
+h2.chap:first-of-type{margin-top:20px}
+section.sec{
+  background:rgba(255,255,255,.9);
+  border:2px solid #e4dff0;
+  padding:4px 15px 14px;margin:0 0 18px;
+}
+section.sec>h3{
+  font-family:var(--dot);font-size:15px;letter-spacing:1px;color:var(--ink);
+  border-left:7px solid var(--pink-deep);
+  padding:2px 0 2px 10px;margin:22px 0 10px;line-height:1.6;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+section.sec>p,section.sec>ul{margin:0 0 9px}
+main.wrap p{line-height:1.95}
+main.wrap ul{margin:0 0 9px;padding-left:1.25em}
+main.wrap li{margin:0 0 6px;line-height:1.95}
+
+/* 節ごとの表示ボタン */
+.secbtn{
+  font-family:var(--dot);font-size:10px;letter-spacing:1px;
+  color:var(--muted);background:#fff;border:2px solid var(--muted);
+  padding:1px 7px;cursor:pointer;line-height:1.6;
+}
+.secbtn:hover{color:var(--pink-deep);border-color:var(--pink-deep)}
+
+/* ---- 条文ボックス ---- */
+.stat{
+  background:#f4f6fb;border:2px dashed #98a3c0;
+  padding:10px 12px;margin:0 0 10px;font-size:13.5px;line-height:1.9;
+}
+
+/* ---- ポイント囲み ---- */
+.tip{
+  background:#fffaf0;border:3px solid var(--ink);box-shadow:var(--hard);
+  padding:12px 14px;margin:16px 0 18px;
+}
+.tip>.tip-h{
+  font-family:var(--dot);font-size:13px;letter-spacing:1px;color:var(--ink);
+  background:var(--gold);border:2px solid var(--ink);
+  display:inline-block;padding:2px 9px;margin-bottom:9px;
+}
+.tip ul{margin:0;padding-left:1.2em}
+
+/* ○× ドリル */
+.ox{background:#f2fbf1;border-color:var(--ink)}
+.ox>.tip-h{background:var(--green-soft)}
+.ox li{margin-bottom:8px}
+
+/* ---- テーブル ---- */
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 14px;
+  border:3px solid var(--ink);box-shadow:var(--hard);background:#fff}
+table.tbl{border-collapse:collapse;width:100%;min-width:560px;font-size:13px;background:#fff}
+table.tbl th,table.tbl td{border:1px solid #cbc6dc;padding:7px 9px;vertical-align:top;line-height:1.8}
+table.tbl thead th{
+  background:var(--pink-soft);font-family:var(--dot);font-weight:400;
+  letter-spacing:1px;color:var(--ink);white-space:nowrap;
+}
+table.tbl tbody th{background:#faf8fd;text-align:left;font-weight:700;white-space:nowrap}
+table.tbl tbody tr:nth-child(even) td{background:#fdfcff}
+.tblnote{font-size:11.5px;color:var(--muted);margin:-8px 0 14px}
+
+/* ---- 目次 ---- */
+.toc{background:rgba(255,255,255,.95);border:3px solid var(--ink);box-shadow:var(--hard);
+  padding:14px 16px;margin:0 0 26px}
+.toc .toc-h{font-family:var(--dot);font-size:13px;letter-spacing:1px;margin-bottom:8px;color:var(--ink)}
+.toc ol{margin:0;padding-left:0;font-size:13px;list-style:none}
+.toc>ol>li{margin:5px 0;font-weight:700}
+.toc ol ol{padding-left:1.1em;font-weight:400}
+.toc ol ol li{margin:2px 0}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--pink-deep)}
+.toc a:hover{color:var(--pink-deep)}
+
+/* ---- 使い方 ---- */
+.howto{
+  background:var(--pink-soft);border:3px solid var(--ink);box-shadow:var(--hard);
+  padding:12px 14px;margin:0 0 22px;font-size:13px;line-height:1.9;
+}
+.howto b{font-family:var(--dot);letter-spacing:1px}
+
+/* ---- 下部の固定コントロール ---- */
+.fab{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:20;
+  display:flex;align-items:center;gap:8px;
+  background:var(--paper);border:3px solid var(--ink);box-shadow:var(--hard);
+  padding:7px 10px;
+}
+.fab button{
+  font-family:var(--dot);font-size:12px;letter-spacing:1px;color:var(--ink);
+  background:#fff;border:2px solid var(--ink);padding:5px 10px;cursor:pointer;
+}
+.fab button:hover{background:var(--gold)}
+.fab .cnt{font-family:var(--dot);font-size:11px;color:var(--muted);white-space:nowrap}
+@media (max-width:480px){
+  .fab{gap:6px;padding:6px 8px;bottom:10px}
+  .fab button{font-size:11px;padding:4px 7px}
+  .fab .cnt{display:none}
+}
+main.wrap{padding-bottom:96px}
+
+/* 印刷時は答えを出す */
+@media print{
+  .fab,.bar,.foot,.px-scene,.px-fg,.px-petal,.secbtn{display:none!important}
+  .k{background:none!important;color:#d61046!important;box-shadow:none!important;font-weight:700}
+}

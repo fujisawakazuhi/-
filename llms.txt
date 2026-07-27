@@ -8,6 +8,10 @@
 - [資金移動業者 登録一覧ウォッチャー](https://fujisawakazuhi.github.io/-/fund-transfer/registry/): 金融庁公表の登録一覧を毎営業日チェックし、一覧の変動（追加・消失）を差分記録
 - [行政処分アーカイブ](https://fujisawakazuhi.github.io/-/fund-transfer/shobun/): 金融庁の報道発表から資金決済関連の行政処分を自動収集
 
+## 司法試験 暗記シート
+- [司法試験 暗記シート](https://fujisawakazuhi.github.io/-/shiho/): 科目・トピック別の暗記／復習用シート。暗記ポイントは押すと答えが表示される赤シート方式
+- [民法／時効](https://fujisawakazuhi.github.io/-/shiho/minpo/jikou.html): 時効総論・完成猶予と更新・取得時効・消滅時効の短答総まくり（改正民法対応）
+
 ## ツール（ブラウザ内で完結）
 - [海外送金コスト比較シミュレータ](https://fujisawakazuhi.github.io/-/tools/costsim/): 銀行TTSとWise中値で受取額・実質コストを試算
 - [秘密度一括チェック](https://fujisawakazuhi.github.io/-/tools/check/): Office/PDF/ZIPのMicrosoft Purview秘密度ラベルを完全ローカルで一括検査

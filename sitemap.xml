@@ -13,4 +13,7 @@
   <url><loc>https://fujisawakazuhi.github.io/-/fund-transfer/registry/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://fujisawakazuhi.github.io/-/fund-transfer/registry/history/</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
   <url><loc>https://fujisawakazuhi.github.io/-/fund-transfer/shobun/</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://fujisawakazuhi.github.io/-/shiho/</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://fujisawakazuhi.github.io/-/shiho/minpo/</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://fujisawakazuhi.github.io/-/shiho/minpo/jikou.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>
