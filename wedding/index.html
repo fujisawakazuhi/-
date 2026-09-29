@@ -118,6 +118,14 @@
   .item .lab{font-family:var(--serif);font-weight:600;font-size:.72rem;letter-spacing:.28em;color:var(--slate)}
   .item .val{font-family:var(--serif);font-weight:500;font-size:1.12rem;line-height:1.7;margin-top:.45em}
   .item .sub{display:block;font-family:var(--serif);font-weight:400;font-size:.9rem;color:var(--muted);margin-top:.4em}
+  /* lounge & breakfast hours */
+  .hours{list-style:none;margin-top:.8em}
+  .hours li{display:grid;grid-template-columns:6.6em 1fr;gap:0 .8em;align-items:baseline;padding:.55em 0;border-top:1px dashed var(--line)}
+  .hours li:first-child{border-top:0}
+  .hours .h-t{font-family:var(--serif);font-weight:600;font-size:.9rem;letter-spacing:.02em;color:var(--slate);white-space:nowrap}
+  .hours .h-w{font-family:var(--serif);font-weight:500;font-size:1rem;line-height:1.6;color:var(--ink)}
+  .hours .h-w small{display:block;font-weight:400;font-size:.86rem;line-height:1.6;color:var(--muted)}
+  .nw{white-space:nowrap}
   p.note{font-family:var(--serif);font-weight:400;color:var(--muted);font-size:1.04rem;margin-top:1.3em;text-align:center}
   p.note strong{color:var(--ink);font-weight:500}
 
@@ -169,8 +177,11 @@
   .tl-body{padding-top:.55em}
   .tl-title{font-family:var(--serif);font-weight:500;font-size:1.12rem;line-height:1.55}
   .tl-sub{display:block;font-family:var(--serif);font-weight:400;font-size:.9rem;color:var(--muted);margin-top:.22em;line-height:1.7}
-  /* free afternoon: dashed circle and dashed line in and out */
+  /* free afternoon: quiet grey, dashed circle and dashed line in and out */
   .tl-row.free .tl-ico{border-style:dashed}
+  .tl-row.free .tl-ico svg{stroke:#A3ABA9}
+  .tl-row.free .tl-time,.tl-row.free .tl-title{color:#8E9795;font-weight:400}
+  .tl-row.free .tl-title{font-size:.98rem}
   .tl-row.free::before,.tl-row:has(+ .free)::before{background:repeating-linear-gradient(to bottom,var(--line) 0 4px,transparent 4px 8px)}
   @media (max-width:400px){
     .tl-row{grid-template-columns:34px 1fr;gap:0 .85em}
@@ -374,6 +385,28 @@
             <span class="sub">沖縄県糸満市西崎町1-6-1<br>房間已為各位訂妥 check in 時請報上護照上的姓名</span>
           </div>
           <a class="link sm" href="https://www.southernbeach-okinawa.com" target="_blank" rel="noopener">飯店資訊</a>
+        </div>
+        <div class="item">
+          <div class="lab">酒廊</div>
+          <div class="val">這次的房間可以使用行政酒廊
+            <span class="sub">Premium Lounge</span>
+          </div>
+          <ul class="hours">
+            <li><span class="h-t">7:00–10:00</span><span class="h-w">早餐<small>歐陸式自助 <span class="nw">最後點餐 9:30</span></small></span></li>
+            <li><span class="h-t">14:00–16:00</span><span class="h-w">下午茶<small>現點現做的鬆餅</small></span></li>
+            <li><span class="h-t">16:00–18:30</span><span class="h-w">雞尾酒時光<small>主廚冷盤開胃菜</small></span></li>
+            <li><span class="h-t">22:00–23:00</span><span class="h-w">睡前酒 Nightcap</span></li>
+          </ul>
+          <span class="sub">Orion 生啤酒 7:00–22:00<br>氣泡酒 7:00–10:00・16:00–22:00<br>時間以飯店當天公告為準</span>
+        </div>
+        <div class="item">
+          <div class="lab">早餐</div>
+          <div class="val">早餐已經幫大家付好囉<br>下面三個地方隨心選</div>
+          <ul class="hours">
+            <li><span class="h-t">6:30–10:30</span><span class="h-w">REIR 海景餐廳<small>自助式早餐 有沖繩在地料理 <span class="nw">最後點餐 10:00</span></small></span></li>
+            <li><span class="h-t">6:30–10:00</span><span class="h-w"><span class="nw">Southern Terrace</span> <span class="nw">泳池畔餐廳</span><small>日式定食或西式套餐 <span class="nw">最後點餐 9:30</span></small></span></li>
+            <li><span class="h-t">7:00–10:00</span><span class="h-w"><span class="nw">Premium Lounge</span> <span class="nw">行政酒廊</span><small>歐陸式自助 <span class="nw">最後點餐 9:30</span></small></span></li>
+          </ul>
         </div>
         <div class="item">
           <div class="lab">車程</div>
