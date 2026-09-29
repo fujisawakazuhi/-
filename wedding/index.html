@@ -57,8 +57,8 @@
   .venue-band{position:relative;width:100vw;margin:0 calc(50% - 50vw) 2.4em;
     height:38vh;min-height:240px;max-height:400px;overflow:hidden}
   .venue-band img{display:block;width:100%;height:100%;object-fit:cover;object-position:22% 42%;
-    filter:saturate(.78) brightness(1.05) contrast(.95);opacity:.86}
-  .venue-band::after{content:"";position:absolute;inset:0;background:rgba(247,245,239,.28)}
+    filter:saturate(.9) brightness(1) contrast(1);opacity:.95}
+  .venue-band::after{content:"";position:absolute;inset:0;background:rgba(247,245,239,.1)}
   .hotel-band img{object-position:center 46%}
   @media (max-width:640px){ .venue-band{height:30vh;min-height:200px;margin-bottom:2em} .venue-band img{object-position:26% center} }
 
@@ -492,7 +492,7 @@
         dpr = Math.min(window.devicePixelRatio || 1, 2);
         W = window.innerWidth; H = window.innerHeight;
         cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-        n = Math.round(Math.min(42, Math.max(18, W * H / 26000)));
+        n = Math.round(Math.min(25, Math.max(11, W * H / 45000)));
         while(petals.length < n) petals.push(make(true));
         petals.length = n;
       }
