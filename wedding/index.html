@@ -65,8 +65,8 @@
   .venue-band{position:relative;width:100vw;margin:0 calc(50% - 50vw) 2.4em;
     height:38vh;min-height:240px;max-height:400px;overflow:hidden}
   .venue-band img{display:block;width:100%;height:100%;object-fit:cover;object-position:22% 42%;
-    filter:saturate(.9) brightness(1) contrast(1);opacity:.95}
-  .venue-band::after{content:"";position:absolute;inset:0;background:rgba(247,245,239,.1)}
+    filter:saturate(.78) brightness(1.05) contrast(.95);opacity:.86}
+  .venue-band::after{content:"";position:absolute;inset:0;background:rgba(247,245,239,.28)}
   .hotel-band img{object-position:center 46%}
   @media (max-width:640px){ .venue-band{height:30vh;min-height:200px;margin-bottom:2em} .venue-band img{object-position:26% center} }
   /* on big screens don't stretch the photos past their real resolution; fade the sides into the paper */
@@ -139,6 +139,7 @@
   .hours .h-t{font-family:var(--serif);font-weight:600;font-size:.9rem;letter-spacing:.02em;color:var(--slate);white-space:nowrap}
   .hours .h-w{font-family:var(--serif);font-weight:500;font-size:1rem;line-height:1.6;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
   .hours .h-w small{display:block;font-weight:400;font-size:.86rem;line-height:1.6;color:var(--muted)}
+  p.fine{font-family:var(--serif);font-size:.86rem;color:#8E9795;margin-top:1.1em}
   p.note{font-family:var(--serif);font-weight:400;color:var(--muted);font-size:1.04rem;margin-top:1.3em;text-align:center}
   p.note strong{color:var(--ink);font-weight:500}
 
@@ -367,11 +368,8 @@
  <span class="sub">夾腳拖跟拖鞋就先放飯店吧<svg class="inl" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8c2.9 0 4.7 2 4.7 4.9 0 2.4-.9 4-.9 6.2 0 1.5.7 2.5.7 4 0 2.6-1.8 4.3-4.5 4.3s-4.5-1.7-4.5-4.3c0-1.5.7-2.5.7-4 0-2.2-.9-3.8-.9-6.2C7.3 4.8 9.1 2.8 12 2.8z"/><path d="M9.1 6.6L12 9.4l2.9-2.8"/><path d="M12 9.4v2.3"/></svg></span>
           </div>
         </div>
-        <div class="item">
-          <div class="lab">備註</div>
-          <div class="val">晚上的 BBQ 穿輕鬆的服裝就好</div>
-        </div>
       </div>
+      <p class="fine">※ 晚上的 BBQ 穿輕鬆的服裝就好</p>
     </div>
   </section>
 
