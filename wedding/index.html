@@ -191,9 +191,9 @@
     .tl-body{grid-column:2;padding-top:.1em}
   }
 
-  /* pale pink sakura petals falling in front of the whole page */
-  .petals{position:fixed;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;opacity:0;transition:opacity 2.4s ease}
-  .petals.on{opacity:1}
+  /* hibiscus flowers drifting down in front of the page (sparse, mostly beside the text) */
+  .flowers{position:fixed;inset:0;width:100%;height:100%;z-index:50;pointer-events:none;opacity:0;transition:opacity 2.4s ease}
+  .flowers.on{opacity:1}
 
   .reveal{opacity:1;transform:none}
   .js .reveal{opacity:0;transform:translateY(26px);transition:opacity 1.1s ease,transform 1.1s ease}
@@ -455,62 +455,95 @@
       setTimeout(function(){els.forEach(function(e){e.classList.add('in');});},3000);
     })();
 
-    /* pale pink sakura petals */
+    /* hibiscus flowers */
     (function(){
       if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       var cv = document.createElement('canvas'), ctx = cv.getContext && cv.getContext('2d');
       if(!ctx || !window.requestAnimationFrame) return;
-      cv.className = 'petals'; cv.setAttribute('aria-hidden', 'true');
+      cv.className = 'flowers'; cv.setAttribute('aria-hidden', 'true');
       document.body.appendChild(cv);
 
-      // one pre-rendered pale pink petal; the soft shadow keeps it visible on the paper colour
-      var S = 64, sp = document.createElement('canvas'); sp.width = sp.height = S;
-      var g = sp.getContext('2d'), w = 30, h = 40;
-      g.translate(S / 2, S / 2);
-      g.shadowColor = 'rgba(38,48,47,.30)'; g.shadowBlur = 5; g.shadowOffsetY = 1;
-      g.beginPath();
-      g.moveTo(0, h / 2);
-      g.bezierCurveTo(-w * .62, h * .22, -w * .52, -h * .38, -w * .2, -h / 2);
-      g.lineTo(0, -h * .33);
-      g.lineTo(w * .2, -h / 2);
-      g.bezierCurveTo(w * .52, -h * .38, w * .62, h * .22, 0, h / 2);
-      g.closePath();
-      var gr = g.createLinearGradient(0, h / 2, 0, -h / 2);
-      gr.addColorStop(0, '#F6D5DF'); gr.addColorStop(.5, '#FCEBF0'); gr.addColorStop(1, '#FFF7F9');
-      g.fillStyle = gr; g.fill();
+      // pre-rendered hibiscus: five ruffled petals, a deep eye, and the long stamen with pollen and a red stigma
+      var S = 128;
+      function flower(petal, mid, eye){
+        var c = document.createElement('canvas'); c.width = c.height = S;
+        var g = c.getContext('2d'), R = 50;
+        g.translate(S / 2, S / 2);
+        function eachPetal(draw){
+          for(var i = 0; i < 5; i++){
+            g.save(); g.rotate(i * Math.PI * 2 / 5);
+            g.beginPath();
+            g.moveTo(0, 0);
+            g.bezierCurveTo(-R * .46, -R * .12, -R * .74, -R * .74, -R * .3, -R * .95);
+            g.quadraticCurveTo(-R * .16, -R * 1.1, 0, -R * .98);
+            g.quadraticCurveTo(R * .16, -R * 1.1, R * .3, -R * .95);
+            g.bezierCurveTo(R * .74, -R * .74, R * .46, -R * .12, 0, 0);
+            g.closePath();
+            draw(); g.restore();
+          }
+        }
+        g.save();
+        g.shadowColor = 'rgba(38,48,47,.22)'; g.shadowBlur = 7; g.shadowOffsetY = 2; g.fillStyle = petal;
+        eachPetal(function(){ g.fill(); });
+        g.restore();
+        var gr = g.createRadialGradient(0, 0, 0, 0, 0, R);
+        gr.addColorStop(0, eye); gr.addColorStop(.22, eye); gr.addColorStop(.45, mid); gr.addColorStop(1, petal);
+        g.fillStyle = gr; g.strokeStyle = 'rgba(120,20,45,.28)'; g.lineWidth = 1.2;
+        eachPetal(function(){ g.fill(); g.stroke(); });
+        g.strokeStyle = 'rgba(255,235,230,.28)'; g.lineWidth = .9;
+        eachPetal(function(){
+          [-.22, 0, .22].forEach(function(k){
+            g.beginPath(); g.moveTo(0, -R * .2); g.quadraticCurveTo(R * k * .6, -R * .55, R * k, -R * .85); g.stroke();
+          });
+        });
+        g.rotate(-.55);
+        g.strokeStyle = '#F4E6C0'; g.lineWidth = 3; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(-R * .1, -R * .6, R * .04, -R * 1.08); g.stroke();
+        g.fillStyle = '#F2C14E';
+        [[-4,-38],[4,-41],[-4,-44],[5,-47],[-2,-50],[4,-52]].forEach(function(d){ g.beginPath(); g.arc(d[0], d[1], 2.3, 0, 7); g.fill(); });
+        g.fillStyle = '#B81E3A';
+        [[-2,-55],[2,-56.5],[5,-55],[0,-58.5],[4,-58.5]].forEach(function(d){ g.beginPath(); g.arc(d[0], d[1], 1.8, 0, 7); g.fill(); });
+        return c;
+      }
+      var red = flower('#EE7B6B', '#D9404F', '#8E1733'), pink = flower('#F6A9B6', '#E86F8B', '#A8244D');
 
-      var W, H, dpr, n, petals = [], last = 0, t = 0;
+      var W, H, dpr, n, wide, fl = [], last = 0, t = 0;
       function rnd(a, b){ return a + Math.random() * (b - a); }
+      function pickX(){
+        var c = W / 2, gap = 380;                  // stay clear of the 560px text column (plus sway)
+        if(wide && c - gap > 60) return Math.random() < .5 ? rnd(20, c - gap) : rnd(c + gap, W - 20);
+        if(Math.random() < .8) return Math.random() < .5 ? rnd(W * .01, W * .18) : rnd(W * .82, W * .99);
+        return rnd(0, W);
+      }
       function make(anywhere){
-        var s = rnd(.26, .6);                       // bigger = nearer = falls faster
-        return { x: rnd(-20, W + 20), y: anywhere ? rnd(-H * .15, H) : rnd(-70, -30), s: s,
-                 vy: 24 + s * 70 + rnd(0, 16), vx: rnd(-6, 14),
-                 amp: rnd(14, 42), fq: rnd(.5, 1.1), ph: rnd(0, 6.3),
-                 r: rnd(0, 6.3), vr: rnd(-1.3, 1.3), f: rnd(0, 6.3), vf: rnd(1.2, 3), a: rnd(.78, 1) };
+        var k = wide ? rnd(.25, .37) : rnd(.18, .26);
+        return { x: pickX(), y: anywhere ? rnd(-H * .1, H) : rnd(-80, -40), k: k,
+                 img: Math.random() < .7 ? red : pink, a: wide ? rnd(.65, .88) : rnd(.55, .78),
+                 vy: 16 + k * 60 + rnd(0, 10), vx: rnd(-2, 2),
+                 amp: rnd(16, 36), fq: rnd(.35, .7), ph: rnd(0, 6.3),
+                 r: rnd(0, 6.3), vr: rnd(-.5, .5), f: rnd(0, 6.3), vf: rnd(.6, 1.2) };
       }
       function size(){
         dpr = Math.min(window.devicePixelRatio || 1, 2);
-        W = window.innerWidth; H = window.innerHeight;
+        W = window.innerWidth; H = window.innerHeight; wide = W >= 900;
         cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-        n = Math.round(Math.min(42, Math.max(18, W * H / 26000)));
-        while(petals.length < n) petals.push(make(true));
-        petals.length = n;
+        n = wide ? Math.round(Math.min(14, Math.max(8, W * H / 95000))) : 5;
+        while(fl.length < n) fl.push(make(true));
+        fl.length = n;
       }
       function frame(now){
         var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; t += dt;
-        var wind = Math.sin(t * .23) * 12 + Math.sin(t * .071) * 7;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, cv.width, cv.height);
-        for(var i = 0; i < petals.length; i++){
-          var p = petals[i];
-          p.y += p.vy * dt; p.x += (p.vx + wind) * dt; p.r += p.vr * dt; p.f += p.vf * dt;
+        for(var i = 0; i < fl.length; i++){
+          var p = fl[i];
+          p.y += p.vy * dt; p.x += p.vx * dt; p.r += p.vr * dt; p.f += p.vf * dt;
+          if(p.y > H + 60){ fl[i] = make(false); continue; }
           var x = p.x + Math.sin(t * p.fq + p.ph) * p.amp;
-          if(p.y > H + 40 || x < -60 || x > W + 60){ petals[i] = make(false); continue; }
-          var fl = Math.cos(p.f); if(Math.abs(fl) < .14) fl = fl < 0 ? -.14 : .14;   // tumbling
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          ctx.translate(x, p.y); ctx.rotate(p.r); ctx.scale(p.s * fl, p.s);
+          ctx.translate(x, p.y); ctx.rotate(p.r); ctx.scale(p.k * (.8 + .2 * Math.cos(p.f)), p.k);   // gentle tilt
           ctx.globalAlpha = p.a;
-          ctx.drawImage(sp, -S / 2, -S / 2);
+          ctx.drawImage(p.img, -S / 2, -S / 2);
         }
         requestAnimationFrame(frame);
       }
