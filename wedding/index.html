@@ -7,6 +7,14 @@
 <meta property="og:title" content="Yifan & Yiting Wedding Invitation">
 <meta property="og:description" content="2026.10.26 沖繩">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://fujisawakazuhi.github.io/-/wedding/">
+<meta property="og:image" content="https://fujisawakazuhi.github.io/-/wedding/images/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Yifan &amp; Yiting Wedding Invitation 2026.10.26 Okinawa">
+<meta property="og:locale" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="2026.10.26 沖繩">
 <title>Yifan &amp; Yiting — Wedding Invitation</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,6 +69,12 @@
   .venue-band::after{content:"";position:absolute;inset:0;background:rgba(247,245,239,.1)}
   .hotel-band img{object-position:center 46%}
   @media (max-width:640px){ .venue-band{height:30vh;min-height:200px;margin-bottom:2em} .venue-band img{object-position:26% center} }
+  /* on big screens don't stretch the photos past their real resolution; fade the sides into the paper */
+  @media (min-width:1100px){
+    .venue-band{width:1000px;margin-left:calc(50% - 500px);margin-right:calc(50% - 500px);
+      -webkit-mask-image:linear-gradient(to right,transparent,#000 7%,#000 93%,transparent);
+      mask-image:linear-gradient(to right,transparent,#000 7%,#000 93%,transparent)}
+  }
 
   /* emphasised arrival time */
   .hi-time{font-weight:600;font-size:1.12rem;letter-spacing:.04em;color:var(--ink);
