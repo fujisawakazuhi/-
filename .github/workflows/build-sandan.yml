@@ -1,0 +1,34 @@
+name: Build law sandan tables
+
+on:
+  schedule:
+    # 毎週月曜 JST 06:47 — 法令改正の反映（変化がなければコミットされない）
+    - cron: '47 21 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sandan data from e-Gov
+        run: python3 scripts/build_sandan.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sandan
+          if git diff --cached --quiet; then
+            echo "No change"
+          else
+            git commit -m "Update law sandan data"
+            for i in 1 2 3; do
+              git push && break
+              git pull --rebase origin main
+            done
+          fi
