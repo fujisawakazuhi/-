@@ -44,10 +44,11 @@
     var t=d.createElement("div");
     t.innerHTML=SCENE+FG;
     while(t.firstElementChild) d.body.appendChild(t.firstElementChild);
-    var petals=[[22,11,0],[38,14,3],[55,12,6],[70,15,1.5],[84,13,8],[47,16,10]];
+    // [左位置%, 落下秒数, 開始遅延秒, 手前=1/奥=0]
+    var petals=[[22,11,0,0],[38,14,3,1],[55,12,6,0],[70,15,1.5,1],[84,13,8,0],[47,16,10,1],[12,17,5,1],[63,13,12,1]];
     petals.forEach(function(p){
       var e=d.createElement("div");
-      e.className="px-petal";
+      e.className="px-petal"+(p[3]?" front":"");
       e.style.left=p[0]+"%";
       e.style.animationDuration=p[1]+"s";
       e.style.animationDelay=p[2]+"s";
