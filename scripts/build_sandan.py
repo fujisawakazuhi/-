@@ -24,9 +24,30 @@ SETS = [
         "titles": {
             "law": "犯罪による収益の移転防止に関する法律",
             "ord": "犯罪による収益の移転防止に関する法律施行令",
-            "reg": "犯罪による収益の移転防止に関する法律施行規則",
         },
         "ids": {"law": "419AC0000000022", "ord": "420CO0000000020"},
+        "regs": [{"key": "", "short": "施行規則", "title": "犯罪による収益の移転防止に関する法律施行規則"}],
+    },
+    {
+        "id": "shikin",
+        "short": "資金決済法",
+        "name": "資金決済に関する法律",
+        "titles": {
+            "law": "資金決済に関する法律",
+            "ord": "資金決済に関する法律施行令",
+        },
+        "ids": {"law": "421AC0000000059"},
+        "labels": {"reg": "内閣府令"},
+        # 第三段は業態ごとの内閣府令（法の章立ての順）。見つからない府令は飛ばす
+        "regs": [
+            {"key": "pre", "short": "前払式府令", "title": "前払式支払手段に関する内閣府令"},
+            {"key": "idou", "short": "資金移動業府令", "title": "資金移動業者に関する内閣府令"},
+            {"key": "denshi", "short": "電子決済手段府令", "title": "電子決済手段等取引業者に関する内閣府令"},
+            {"key": "ango", "short": "暗号資産府令", "title": "暗号資産交換業者に関する内閣府令"},
+            {"key": "chukai", "short": "仲介業府令", "title": "電子決済手段・暗号資産サービス仲介業者に関する内閣府令"},
+            {"key": "bunseki", "short": "為替取引分析業府令", "title": "為替取引分析業者に関する内閣府令"},
+            {"key": "seisan", "short": "資金清算機関府令", "title": "資金清算機関に関する内閣府令"},
+        ],
     },
 ]
 
@@ -406,9 +427,9 @@ def build_rows(L, O, R):
         ord_by_row.setdefault(row, []).append(a)
 
     # 規則の各条 → 行
-    reg_by_row = {}
-    prev = law_keys[0] if law_keys else "appdx"
+    reg_by_row, prev_by_s = {}, {}
     for a in R["arts"] + R["appdx"]:
+        prev = prev_by_s.get(a.get("s", ""), law_keys[0] if law_keys else "appdx")
         rs = refs_in(a)
         a["r"] = [k for kind, k in rs if kind == "法" and k in law_set]
         a["o"] = [k for kind, k in rs if kind == "令" and (k in ord_keys or k == "appdx")]
@@ -424,10 +445,10 @@ def build_rows(L, O, R):
                 row = "appdx"
                 break
         if row is None:
-            row = "appdx" if a["k"].startswith("appdx") else prev
+            row = "appdx" if "appdx" in a["k"] else prev
             a["n"] = 1
         a["row"] = row
-        prev = row
+        prev_by_s[a.get("s", "")] = row
         reg_by_row.setdefault(row, []).append(a)
 
     # 他の行に置いた条のうち、この行の法の条を引用しているもの（関連）
@@ -483,23 +504,51 @@ def meta_summary(meta, law_id, title, num):
     return out
 
 
+def load_part(title, law_id):
+    if not law_id:
+        law_id = search_id(title)
+    if not law_id:
+        raise RuntimeError(f"law id not found: {title}")
+    print(f" {title} -> {law_id}")
+    law_el, meta = fetch_law(law_id)
+    t, num, arts, appdx = parse_law(law_el)
+    print(f"  parsed: {t} / {num} / articles {len(arts)} / appdx {len(appdx)}")
+    if t != title:
+        print("  WARNING: title mismatch:", t)
+    return {"arts": arts, "appdx": appdx, "meta": meta_summary(meta, law_id, t, num)}
+
+
 def build_set(cfg):
     print("==", cfg["id"])
     parts = {}
-    for role in ROLES:
-        title = cfg["titles"][role]
-        law_id = cfg.get("ids", {}).get(role)
-        if not law_id:
-            law_id = search_id(title)
-        if not law_id:
-            raise RuntimeError(f"law id not found: {title}")
-        print(f" {role}: {title} -> {law_id}")
-        law_el, meta = fetch_law(law_id)
-        t, num, arts, appdx = parse_law(law_el)
-        print(f"  parsed: {t} / {num} / articles {len(arts)} / appdx {len(appdx)}")
-        if t != title:
-            print("  WARNING: title mismatch:", t)
-        parts[role] = {"arts": arts, "appdx": appdx, "meta": meta_summary(meta, law_id, t, num)}
+    for role in ("law", "ord"):
+        parts[role] = load_part(cfg["titles"][role], cfg.get("ids", {}).get(role))
+
+    # 第三段（施行規則・府令）。複数ある場合は条のキーに府令の記号を付ける
+    regs_cfg = cfg["regs"]
+    multi = len(regs_cfg) > 1
+    R = {"arts": [], "appdx": []}
+    reg_metas = []
+    for rc in regs_cfg:
+        try:
+            part = load_part(rc["title"], rc.get("id"))
+        except Exception as e:
+            if not multi:
+                raise
+            print("  SKIP reg:", rc["title"], repr(e))
+            continue
+        if multi:
+            for a in part["arts"] + part["appdx"]:
+                a["k"] = rc["key"] + "-" + a["k"]
+                a["s"] = rc["key"]
+        R["arts"] += part["arts"]
+        R["appdx"] += part["appdx"]
+        m = part["meta"]
+        m.update({"key": rc["key"], "short": rc["short"], "count": len(part["arts"])})
+        reg_metas.append(m)
+    if not reg_metas:
+        raise RuntimeError("no regulation loaded")
+    parts["reg"] = R
 
     rows = build_rows(parts["law"], parts["ord"], parts["reg"])
 
@@ -507,19 +556,37 @@ def build_set(cfg):
     for role in ("ord", "reg"):
         arts = parts[role]["arts"]
         nref = [a["k"] for a in arts if a.get("n")]
-        print(f"  {role}: {len(arts)} arts, no-ref {len(nref)}: {nref[:20]}")
+        print(f"  {role}: {len(arts)} arts, no-ref {len(nref)}: {nref[:30]}")
     placed = sum(len(r["ord"]) for r in rows if r["type"] == "row")
     print("  ord placed:", placed, "/", len(parts["ord"]["arts"]) + len(parts["ord"]["appdx"]))
     placed = sum(len(r["reg"]) for r in rows if r["type"] == "row")
-    print("  reg placed:", placed, "/", len(parts["reg"]["arts"]) + len(parts["reg"]["appdx"]))
+    print("  reg placed:", placed, "/", len(R["arts"]) + len(R["appdx"]))
+    for r in rows:
+        if r["type"] == "row" and (r["ord"] or r["reg"]):
+            print("   ", r["law"]["t"], "令", [a["k"] for a in r["ord"]][:12], "規", [a["k"] for a in r["reg"]][:14])
 
-    return {
+    labels = dict(LABEL)
+    labels.update(cfg.get("labels") or {})
+    out = {
         "id": cfg["id"], "short": cfg["short"], "name": cfg["name"],
-        "laws": {role: parts[role]["meta"] for role in ROLES},
-        "labels": LABEL,
-        "counts": {role: len(parts[role]["arts"]) for role in ROLES},
+        "laws": {"law": parts["law"]["meta"], "ord": parts["ord"]["meta"]},
+        "labels": labels,
+        "counts": {"law": len(parts["law"]["arts"]), "ord": len(parts["ord"]["arts"]), "reg": len(R["arts"])},
         "rows": rows,
     }
+    if multi:
+        out["regs"] = reg_metas
+        out["laws"]["reg"] = {"title": labels["reg"] + "（" + str(len(reg_metas)) + "本）",
+                              "num": "、".join(m["short"] for m in reg_metas),
+                              "id": "", "url": reg_metas[0]["url"], "pending": []}
+    else:
+        m = reg_metas[0]
+        for k in ("key", "short", "count"):
+            m.pop(k, None)
+        out["laws"]["reg"] = m
+    # 既存データとキーの並びをそろえる（変更検知のため）
+    out["laws"] = {k: out["laws"][k] for k in ROLES}
+    return out
 
 
 def main():
