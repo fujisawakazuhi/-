@@ -32,7 +32,7 @@ main.sd-wrap{max-width:1880px;padding-top:14px;padding-bottom:30px}
 .pane{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:2px solid var(--line)}
 .pane:last-child{border-right:none}
 .pane[hidden]{display:none}
-.ph{flex:none;padding:7px 12px 8px;color:#fff;line-height:1.55}
+.ph{flex:none;padding:7px 12px 8px;color:#fff;line-height:1.55;position:relative}
 .ph.law{background:var(--c-law)} .ph.ord{background:var(--c-ord)} .ph.reg{background:var(--c-reg)}
 .ph .pt{display:flex;gap:8px;align-items:baseline;min-width:0}
 .ph .tag{font-family:var(--dot);font-size:14px;letter-spacing:1px;flex:none}
@@ -111,3 +111,24 @@ a.ref:hover{border-bottom-style:solid}
 
 /* このページでは前景の桜の枝を表の背面に回す（操作バーに重ならないように） */
 body.sd-page .px-fg{z-index:0}
+
+/* 第三段が複数の府令のとき：府令名のバッジと選択パネル */
+.src{display:inline-block;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 6px;border:1.5px solid;white-space:nowrap}
+.regsel{min-width:0}
+.regsel summary{cursor:pointer;font-size:12px;font-weight:700;background:rgba(255,255,255,.95);color:var(--ink);padding:1px 8px;list-style:none;white-space:nowrap}
+.regsel summary::-webkit-details-marker{display:none}
+.regsel .rlist{position:absolute;left:8px;right:8px;top:calc(100% - 6px);z-index:30;background:#fff;color:var(--ink);border:3px solid var(--ink);box-shadow:var(--hard);padding:8px 10px;max-height:65vh;overflow:auto}
+.regsel .rhint{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.regsel .ri{display:flex;gap:8px;align-items:flex-start;padding:7px 2px;border-top:1px dashed #ddd8e7;cursor:pointer}
+.regsel .ri input{margin-top:4px}
+.regsel .rt{font-size:12.5px;line-height:1.6}
+.regsel .rt a{color:var(--ink);font-weight:700}
+.regsel .rt small{display:block;color:var(--muted);font-size:11px}
+.regsel .rt small.rv{color:var(--t-reg);font-weight:700}
+.regsel .rt small.rp{color:#8a6100}
+.regsel .rt a{white-space:normal;overflow:visible}
+.rel[hidden],.rel a[hidden]{display:none}
+.rel i{font-style:normal}
+.rel a[hidden] + i{display:none}
+/* 画面外の条文はレイアウトを後回しにして、大きな法令でも素早く表示する */
+.pane .art{content-visibility:auto;contain-intrinsic-size:auto 320px}

@@ -16,6 +16,15 @@
 
   var data, rowsInfo = [], has = { law: {}, ord: {}, reg: {} }, titles = { ord: {}, reg: {} };
   var panes = {}, activeKey = null, syncOn = true, narrow = false, narrowCol = "law";
+  // 第三段に複数の府令がある場合（資金決済法など）
+  var multi = false, regInfo = {}, regOn = {};
+  var SRC_BG = ["#fde2ec", "#dff3e2", "#e1ebfb", "#fbeed3", "#ece3f8", "#d9f1f2", "#f4e4d6", "#e9ecef"];
+  var SRC_FG = ["#a8325f", "#2c7a3c", "#2a4ea6", "#8a5a00", "#6a3fa0", "#1d6f73", "#8a4a1d", "#4a4f57"];
+  function srcBadge(key) {
+    var r = regInfo[key];
+    if (!r) return "";
+    return '<span class="src" style="background:' + SRC_BG[r.i % 8] + ";color:" + SRC_FG[r.i % 8] + ";border-color:" + SRC_FG[r.i % 8] + '">' + esc(r.short) + "</span>";
+  }
   var qEl, onlyEl, cntEl, jumpEl, syncEl, panesEl;
 
   /* ---------- 文字列ユーティリティ ---------- */
@@ -105,7 +114,8 @@
   }
   function artHTML(a, col, rowK) {
     var id = PFX[col] + "-" + a.k;
-    var h = '<article class="art" id="' + id + '" data-k="' + rowK + '"><header class="ah"><a class="at" href="#' + id + '">' + esc(a.t) + "</a>" +
+    var h = '<article class="art" id="' + id + '" data-k="' + rowK + '"' + (a.s ? ' data-s="' + a.s + '"' : "") + '><header class="ah">' +
+      (a.s ? srcBadge(a.s) : "") + '<a class="at" href="#' + id + '">' + esc(a.t) + "</a>" +
       (a.c ? '<span class="ac">' + esc(a.c) + "</span>" : "") + (col === "law" ? "" : chips(a)) + "</header>";
     h += '<div class="ab">' + linesHTML(a.L, col);
     (a.sub || []).forEach(function (s) {
@@ -116,8 +126,9 @@
   function relHTML(keys, col) {
     if (!keys || !keys.length) return "";
     return '<div class="rel">このほか関連する条（別のまとまりに掲載）：' + keys.map(function (k) {
-      return '<a href="#' + PFX[col] + "-" + k + '">' + esc(titles[col][k] || kLabel(k)) + "</a>";
-    }).join("、") + "</div>";
+      var src = col === "reg" && multi ? ' data-s="' + k.split("-")[0] + '"' : "";
+      return '<a href="#' + PFX[col] + "-" + k + '"' + src + ">" + esc(titles[col][k] || kLabel(k)) + "</a>";
+    }).join("<i>、</i>") + "</div>";
   }
   function plain(a) {
     var out = [a.t, a.c || ""];
@@ -126,7 +137,43 @@
     L.forEach(function (ln) { out.push(ln[0] === "tbl" ? ln[2].map(function (r) { return r.join(" "); }).join(" ") : ln[2]); });
     return out.join(" ");
   }
+  function verText(m) {
+    return m.enforced ? wareki(m.enforced) + " 施行の内容" + (m.amend_num ? "（最終改正：" + m.amend_num + "）" : "") : "現行";
+  }
+  function multiHead() {
+    var lst = data.regs.map(function (m) {
+      var ps = m.pending || [];
+      return '<label class="ri"><input type="checkbox" data-s="' + m.key + '"' + (regOn[m.key] ? " checked" : "") + ">" +
+        '<span class="rt">' + srcBadge(m.key) + ' <a href="' + esc(m.url) + '" target="_blank" rel="noopener">' + esc(m.title) + "</a>" +
+        "<small>" + esc(m.num) + "</small>" +
+        '<small class="rv">📅 ' + esc(verText(m)) + "</small>" +
+        (ps.length ? '<small class="rp">⏳ 未施行の改正 ' + ps.length + "件（" + esc(wareki(ps[0].enforced)) + (ps.length > 1 ? "〜" : "") + "施行予定）※表には未反映</small>" : "") +
+        "</span></label>";
+    }).join("");
+    var npend = data.regs.filter(function (m) { return (m.pending || []).length; }).length;
+    return '<div class="ph reg"><div class="pt"><span class="tag">' + data.labels.reg + "</span>" +
+      '<details class="regsel"><summary>' + data.regs.length + "本の府令 ▾ 施行日・表示の切替</summary>" +
+      '<div class="rlist"><div class="rhint">表示する府令を選べます（選択はこの端末に保存）。各府令の施行日もここで確認できます。</div>' + lst + "</div></details></div>" +
+      '<div class="pv" id="sdRegShow"></div>' +
+      (npend ? '<div class="pp">⏳ 未施行の改正がある府令：' + npend + "本（▾の一覧で確認）※表には未反映</div>" : "") + "</div>";
+  }
+  function regShowText() {
+    var on = data.regs.filter(function (m) { return regOn[m.key]; });
+    var el = document.getElementById("sdRegShow");
+    if (el) el.innerHTML = "<b>表示中 " + on.length + "/" + data.regs.length + "本</b><small>" + esc(on.map(function (m) { return m.short; }).join("・")) + "</small>";
+  }
+  function applyRegs() {
+    if (!multi) return;
+    panes.reg.pb.querySelectorAll(".art[data-s], .rel a[data-s]").forEach(function (el) { el.hidden = !regOn[el.getAttribute("data-s")]; });
+    panes.reg.pb.querySelectorAll(".rel").forEach(function (r) { r.hidden = !r.querySelector("a:not([hidden])"); });
+    panes.reg.items.forEach(function (it) {
+      it.el.classList.toggle("empty", !it.el.querySelector(".art:not([hidden])") && !it.el.querySelector(".rel:not([hidden])"));
+    });
+    regShowText();
+    try { localStorage.setItem("sandan-regs-" + data.id, JSON.stringify(regOn)); } catch (e) {}
+  }
   function paneHead(c) {
+    if (c === "reg" && multi) return multiHead();
     var m = data.laws[c], ver;
     if (m.enforced) {
       ver = "<b>" + esc(wareki(m.enforced)) + " 施行の内容</b>" +
@@ -207,7 +254,8 @@
       data.rows.forEach(function (r) {
         if (r.type !== "row") return;
         (c === "law" ? [r.law] : r[c]).forEach(function (a) {
-          opt += '<option value="' + PFX[c] + "-" + a.k + '">' + esc((c === "law" ? "法 " : c === "ord" ? "令 " : "規則 ") + a.t + (a.c || "")) + "</option>";
+          var pre = c === "law" ? "法 " : c === "ord" ? "令 " : (a.s && regInfo[a.s] ? regInfo[a.s].short + " " : "規則 ");
+          opt += '<option value="' + PFX[c] + "-" + a.k + '">' + esc(pre + a.t + (a.c || "")) + "</option>";
         });
       });
       opt += "</optgroup>";
@@ -230,6 +278,19 @@
     app.addEventListener("click", onClick);
     window.addEventListener("resize", layout);
 
+    if (multi) {
+      app.querySelectorAll(".regsel input[data-s]").forEach(function (cb) {
+        cb.addEventListener("change", function () {
+          var on = 0;
+          app.querySelectorAll(".regsel input[data-s]").forEach(function (x) { if (x.checked) on++; });
+          if (!on) { cb.checked = true; return; } // 最低1本は表示
+          regOn[cb.getAttribute("data-s")] = cb.checked;
+          applyRegs();
+          if (activeKey) scrollPaneTo("reg", activeKey);
+        });
+      });
+      applyRegs();
+    }
     layout();
     applyFilter();
     activeKey = panes.law.items.length ? panes.law.items[0].k : null;
@@ -256,9 +317,15 @@
     var p = panes[c];
     el = el || p.map[k];
     if (!el || el.hidden || p.pane.hidden) return;
-    p.lock = Date.now() + 250;
     p.last = k;
-    p.pb.scrollTop = Math.max(0, el.offsetTop - 6);
+    // 画面外の条文は後からレイアウトされて高さが確定するので、数フレーム位置を補正する
+    var fix = function (n) {
+      var want = Math.max(0, el.offsetTop - 6);
+      if (Math.abs(p.pb.scrollTop - want) > 2) { p.lock = Date.now() + 250; p.pb.scrollTop = want; }
+      if (n > 0) requestAnimationFrame(function () { fix(n - 1); });
+    };
+    p.lock = Date.now() + 250;
+    fix(4);
   }
   function syncAll(k, from) {
     visibleCols().forEach(function (c) {
@@ -391,7 +458,7 @@
       }
     });
     cntEl.textContent = (q || only) ? shown + " / " + rowsInfo.length + " 条" :
-      "法律 " + data.counts.law + "条・施行令 " + data.counts.ord + "条・施行規則 " + data.counts.reg + "条";
+      COLS.map(function (c) { return data.labels[c] + " " + data.counts[c] + "条"; }).join("・");
     if (q || only) {
       COLS.forEach(function (c) { panes[c].pb.scrollTop = 0; panes[c].last = null; });
       var first = rowsInfo.filter(function (r) { return !panes.law.map[r.k].hidden; })[0];
@@ -413,6 +480,12 @@
     if (id.indexOf("g-r-") === 0) c = "reg";
     if (!c) return;
     var k = el.getAttribute("data-k");
+    if (multi && el.getAttribute("data-s") && el.hidden) {
+      regOn[el.getAttribute("data-s")] = true;
+      var cb = app.querySelector('.regsel input[data-s="' + el.getAttribute("data-s") + '"]');
+      if (cb) cb.checked = true;
+      applyRegs();
+    }
     if (el.hidden || (el.closest(".grp") && el.closest(".grp").hidden)) { qEl.value = ""; onlyEl.checked = false; applyFilter(); }
     showCol(c);
     scrollPaneTo(c, k, el);
@@ -439,11 +512,21 @@
     .then(function (r) { return r.json(); })
     .then(function (d) {
       data = d;
+      multi = !!(d.regs && d.regs.length > 1);
+      if (multi) {
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem("sandan-regs-" + d.id) || "null"); } catch (e) {}
+        d.regs.forEach(function (m, i) {
+          regInfo[m.key] = { short: m.short, i: i };
+          regOn[m.key] = saved && (m.key in saved) ? !!saved[m.key] : true;
+        });
+        if (!d.regs.some(function (m) { return regOn[m.key]; })) d.regs.forEach(function (m) { regOn[m.key] = true; });
+      }
       d.rows.forEach(function (r) {
         if (r.type !== "row") return;
         has.law[r.k] = 1;
         r.ord.forEach(function (a) { has.ord[a.k] = 1; titles.ord[a.k] = a.t; });
-        r.reg.forEach(function (a) { has.reg[a.k] = 1; titles.reg[a.k] = a.t; });
+        r.reg.forEach(function (a) { has.reg[a.k] = 1; titles.reg[a.k] = (a.s && regInfo[a.s] ? regInfo[a.s].short + " " : "") + a.t; });
       });
       var up = document.getElementById("sdUpdated");
       if (up) up.textContent = d.updated || "";
