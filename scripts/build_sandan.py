@@ -315,12 +315,24 @@ def art_text(a):
 
 
 def refs_in(a):
-    """[(種類'法'/'令', key), ...] 出現順・重複なし"""
-    seen, out = set(), []
-    for m in RE_REF.finditer(art_text(a)):
+    """[(種類'法'/'令', key), ...] 出現順・重複なし。
+    括弧書き（定義・例外の言及が多い）の外にある引用を先に並べる。
+    配置先はこの先頭の引用で決まる。"""
+    txt = art_text(a)
+    depth, d = [], 0
+    for ch in txt:
+        if ch == "（":
+            d += 1
+        depth.append(d)
+        if ch == "）":
+            d = max(0, d - 1)
+    top, inner = [], []
+    for m in RE_REF.finditer(txt):
         r = (m.group(1), ref_key(m))
-        if r not in seen:
-            seen.add(r)
+        (top if depth[m.start()] == 0 else inner).append(r)
+    out = []
+    for r in top + inner:
+        if r not in out:
             out.append(r)
     return out
 
