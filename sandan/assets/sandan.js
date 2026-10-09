@@ -1,4 +1,7 @@
-/* 法令三段表ビューア: #sdApp[data-src] の JSON（scripts/build_sandan.py が生成）を描画 */
+/* 法令三段表ビューア
+   #sdApp[data-src] の JSON（scripts/build_sandan.py が生成）を3列で描画する。
+   各列は独立してスクロールでき、操作中の列の「いま読んでいる法の条」に
+   他の列が自動で追従する（連動スクロール）。 */
 (function () {
   "use strict";
   var app = document.getElementById("sdApp");
@@ -11,9 +14,11 @@
     "|((?:政令|主務省令|内閣府令|命令)で定め)" +
     "|(^|[^\\u3400-\\u9fff々〆同])(別表)", "g");
 
-  var data, rows = [], has = { law: {}, ord: {}, reg: {} }, titles = { ord: {}, reg: {} };
-  var qEl, onlyEl, cntEl, jumpEl, stickyEl, bodyEl;
+  var data, rowsInfo = [], has = { law: {}, ord: {}, reg: {} }, titles = { ord: {}, reg: {} };
+  var panes = {}, activeKey = null, syncOn = true, narrow = false, narrowCol = "law";
+  var qEl, onlyEl, cntEl, jumpEl, syncEl, panesEl;
 
+  /* ---------- 文字列ユーティリティ ---------- */
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
@@ -43,14 +48,25 @@
     var p = k.split("_");
     return p[0] + "条" + p.slice(1).map(function (x) { return "の" + x; }).join("");
   }
+  // "2025-06-01" → "令和7年6月1日"
+  function wareki(ymd) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd || "");
+    if (!m) return ymd || "";
+    var y = +m[1], md = +(m[2] + m[3]), era, ey;
+    if (y > 2019 || (y === 2019 && md >= 501)) { era = "令和"; ey = y - 2018; }
+    else if (y > 1989 || (y === 1989 && md >= 108)) { era = "平成"; ey = y - 1988; }
+    else { era = "昭和"; ey = y - 1925; }
+    return era + (ey === 1 ? "元" : ey) + "年" + (+m[2]) + "月" + (+m[3]) + "日";
+  }
 
-  // 条文テキスト → HTML（委任文言の色分け、法・令の引用をリンク化）
+  /* ---------- 条文の描画 ---------- */
   function deco(s, col) {
     return esc(s).replace(RE, function (m, pre, kind, ap, num, nos, dg, pre2, selfAp) {
       if (dg) {
-        return '<mark class="dg ' + (dg.indexOf("政令") === 0 ? "dg-o" : "dg-r") + '">' + dg + "</mark>";
+        var o = dg.indexOf("政令") === 0;
+        return '<mark class="dg ' + (o ? "dg-o" : "dg-r") + '" title="クリックで' + (o ? "施行令" : "施行規則") + 'の該当箇所へ">' + dg + "</mark>";
       }
-      if (selfAp) { // 法の本文中の「別表」→ 別表の行
+      if (selfAp) { // 法の本文中の「別表」→ 法の別表
         return col === "law" && has.law.appdx ? (pre2 || "") + '<a class="ref rl" href="#h-appdx">別表</a>' : m;
       }
       pre = pre || "";
@@ -61,7 +77,6 @@
       return m;
     });
   }
-
   function tableHTML(head, rws, col) {
     return '<div class="tblw"><table class="ltbl">' + rws.map(function (r, i) {
       var tag = i < head ? "th" : "td";
@@ -80,17 +95,17 @@
   function chips(a) {
     var out = [];
     (a.r || []).forEach(function (k) {
-      if (has.law[k]) out.push('<a class="chip cl" href="#h-' + (k.indexOf("appdx") === 0 ? "appdx" : k) + '">法' + kLabel(k) + "</a>");
+      if (has.law[k]) out.push('<a class="chip cl" href="#h-' + k + '">法' + kLabel(k) + "</a>");
     });
     (a.o || []).forEach(function (k) {
       if (has.ord[k]) out.push('<a class="chip co" href="#o-' + k + '">令' + kLabel(k) + "</a>");
     });
-    if (a.n) out.push('<span class="chip cn" title="条文中に法・令の条の引用がないため、直前の条と同じ行に置いています">引用なし</span>');
-    return out.length ? '<span class="chips">' + out.join(" ") + "</span>" : "";
+    if (a.n) out.push('<span class="chip cn" title="条文中に法・令の条の引用がないため、直前の条と同じまとまりに置いています">引用なし</span>');
+    return out.join(" ");
   }
-  function artHTML(a, col) {
+  function artHTML(a, col, rowK) {
     var id = PFX[col] + "-" + a.k;
-    var h = '<article class="art" id="' + id + '"><header class="ah"><a class="at" href="#' + id + '">' + esc(a.t) + "</a>" +
+    var h = '<article class="art" id="' + id + '" data-k="' + rowK + '"><header class="ah"><a class="at" href="#' + id + '">' + esc(a.t) + "</a>" +
       (a.c ? '<span class="ac">' + esc(a.c) + "</span>" : "") + (col === "law" ? "" : chips(a)) + "</header>";
     h += '<div class="ab">' + linesHTML(a.L, col);
     (a.sub || []).forEach(function (s) {
@@ -100,58 +115,89 @@
   }
   function relHTML(keys, col) {
     if (!keys || !keys.length) return "";
-    return '<div class="rel">このほか関連する条（他の行に掲載）：' + keys.map(function (k) {
+    return '<div class="rel">このほか関連する条（別のまとまりに掲載）：' + keys.map(function (k) {
       return '<a href="#' + PFX[col] + "-" + k + '">' + esc(titles[col][k] || kLabel(k)) + "</a>";
     }).join("、") + "</div>";
   }
   function plain(a) {
     var out = [a.t, a.c || ""];
-    (a.L || []).concat([].concat.apply([], (a.sub || []).map(function (s) { return [[0, 0, s.t]].concat(s.L); })))
-      .forEach(function (ln) { out.push(ln[0] === "tbl" ? ln[2].map(function (r) { return r.join(" "); }).join(" ") : ln[2]); });
+    var L = (a.L || []).slice();
+    (a.sub || []).forEach(function (s) { L.push([0, 0, s.t]); L = L.concat(s.L); });
+    L.forEach(function (ln) { out.push(ln[0] === "tbl" ? ln[2].map(function (r) { return r.join(" "); }).join(" ") : ln[2]); });
     return out.join(" ");
+  }
+  function paneHead(c) {
+    var m = data.laws[c], ver;
+    if (m.enforced) {
+      ver = "<b>" + esc(wareki(m.enforced)) + " 施行の内容</b>" +
+        (m.amend_num ? "<small>最終改正：" + esc(m.amend_num) + "</small>" : "");
+      ver = '<div class="pv" title="' + esc(wareki(m.enforced) + " 施行" + (m.amend_num ? "／最終改正：" + m.amend_num + "（" + (m.amend_title || "") + "）" : "")) + '">' + ver + "</div>";
+    } else {
+      ver = '<div class="pv"><b>現行（e-Gov ' + esc(data.updated || "") + " 取得）</b></div>";
+    }
+    var ps = m.pending || [], pend = "";
+    if (ps.length) {
+      var tip = ps.map(function (p) { return wareki(p.enforced) + " 施行予定：" + (p.num || "") + " " + (p.title || ""); }).join("\n");
+      pend = '<div class="pp" title="' + esc(tip) + '">⏳ 未施行の改正 ' + ps.length + "件（" + esc(wareki(ps[0].enforced)) +
+        (ps.length > 1 ? "〜" : "") + "施行予定）※表には未反映</div>";
+    }
+    return '<div class="ph ' + c + '"><div class="pt"><span class="tag">' + data.labels[c] + '</span><a href="' + esc(m.url) +
+      '" target="_blank" rel="noopener" title="' + esc(m.title + "（" + m.num + "）") + '">' + esc(m.title) + "</a></div>" +
+      ver + pend + "</div>";
   }
 
   function render() {
-    var L = data.laws;
     document.title = data.short + " 三段表 · マイポータル";
-    // 列見出し・操作バー
-    var head = '<div class="sd-tools">' +
+    var tools = '<div class="sd-tools">' +
       '<select id="sdJump" aria-label="条文へジャンプ"><option value="">📍 条文へジャンプ…</option></select>' +
       '<input type="search" id="sdQ" placeholder="🔍 3つの法令を横断検索（例：本人確認書類）">' +
       '<span class="cnt" id="sdCnt"></span>' +
+      '<label class="chk sync" title="どれかの列をスクロールすると、他の列が対応する箇所へ自動で移動します"><input type="checkbox" id="sdSync" checked>🔗 連動スクロール</label>' +
       '<label class="chk"><input type="checkbox" id="sdOnly">政令・省令の対応がある条だけ</label>' +
       '<span class="colsw">表示：' + COLS.map(function (c) {
         return '<button type="button" data-col="' + c + '" aria-pressed="true">' + data.labels[c] + "</button>";
-      }).join("") + "</span></div>" +
-      '<div class="sd-colhead grid3">' + COLS.map(function (c) {
-        return '<div class="' + c + '">' + data.labels[c] + "<small>" + esc(L[c].num) + "</small></div>";
-      }).join("") + "</div>";
+      }).join("") + "</span></div>";
 
-    var body = "";
+    var body = { law: "", ord: "", reg: "" };
     data.rows.forEach(function (r) {
-      if (r.type === "head") { body += '<div class="sd-chap">' + esc(r.path.join("　")) + "</div>"; return; }
-      body += '<section class="sd-row grid3" data-k="' + r.k + '">' +
-        '<div class="cell law"><div class="cin">' + artHTML(r.law, "law") + "</div></div>" +
-        '<div class="cell ord"><div class="cin">' + (r.ord.length ? r.ord.map(function (a) { return artHTML(a, "ord"); }).join("") : '<span class="empty">—</span>') + relHTML(r.rel_ord, "ord") + "</div></div>" +
-        '<div class="cell reg">' + (r.reg.length ? r.reg.map(function (a) { return artHTML(a, "reg"); }).join("") : '<span class="empty">—</span>') + relHTML(r.rel_reg, "reg") + "</div>" +
-        "</section>";
+      if (r.type === "head") {
+        COLS.forEach(function (c) { body[c] += '<div class="sd-chap">' + esc(r.path.join("　")) + "</div>"; });
+        return;
+      }
+      body.law += artHTML(r.law, "law", r.k);
+      ["ord", "reg"].forEach(function (c) {
+        var arts = r[c], rel = relHTML(r["rel_" + c], c);
+        body[c] += '<section class="grp' + (arts.length || rel ? "" : " empty") + '" id="g-' + PFX[c] + "-" + r.k + '" data-k="' + r.k + '">' +
+          '<a class="gh" href="#h-' + r.k + '">法 ' + esc(r.law.t) + esc(r.law.c || "") + " 関係</a>" +
+          arts.map(function (a) { return artHTML(a, c, r.k); }).join("") + rel + "</section>";
+      });
     });
-    app.innerHTML = '<div class="sd-sticky" id="sdSticky">' + head + '</div><div class="sd-body" id="sdBody">' + body + "</div>";
+    app.innerHTML = tools + '<div class="sd-panes" id="sdPanes">' + COLS.map(function (c) {
+      return '<div class="pane ' + c + '" data-col="' + c + '">' + paneHead(c) + '<div class="pb" tabindex="0">' + body[c] + "</div></div>";
+    }).join("") + "</div>";
 
-    stickyEl = document.getElementById("sdSticky");
-    bodyEl = document.getElementById("sdBody");
     qEl = document.getElementById("sdQ");
     onlyEl = document.getElementById("sdOnly");
     cntEl = document.getElementById("sdCnt");
     jumpEl = document.getElementById("sdJump");
+    syncEl = document.getElementById("sdSync");
+    panesEl = document.getElementById("sdPanes");
 
-    // 行の検索インデックス
-    var els = bodyEl.children, ri = 0;
+    COLS.forEach(function (c) {
+      var pane = panesEl.querySelector('.pane[data-col="' + c + '"]'), pb = pane.querySelector(".pb");
+      var items = c === "law"
+        ? [].slice.call(pb.querySelectorAll(":scope > .art")).map(function (el) { return { k: el.getAttribute("data-k"), el: el }; })
+        : [].slice.call(pb.querySelectorAll(":scope > .grp")).map(function (el) { return { k: el.getAttribute("data-k"), el: el }; });
+      panes[c] = { pane: pane, pb: pb, items: items, map: {}, last: null, lock: 0, user: 0, raf: 0 };
+      items.forEach(function (it) { panes[c].map[it.k] = it.el; });
+      bindPane(c);
+    });
+
+    // 行ごとの検索インデックス
     data.rows.forEach(function (r) {
-      var el = els[ri++];
-      if (r.type === "head") { rows.push({ head: true, el: el }); return; }
+      if (r.type !== "row") return;
       var txt = [plain(r.law)].concat(r.ord.map(plain), r.reg.map(plain)).join(" ");
-      rows.push({ el: el, idx: norm(txt), has: !!(r.ord.length || r.reg.length || r.deleg) });
+      rowsInfo.push({ k: r.k, idx: norm(txt), has: !!(r.ord.length || r.reg.length || r.deleg) });
     });
 
     // ジャンプ用リスト
@@ -167,69 +213,143 @@
       opt += "</optgroup>";
     });
     jumpEl.insertAdjacentHTML("beforeend", opt);
-
     jumpEl.addEventListener("change", function () {
       if (this.value) { goTo(this.value, true); this.value = ""; }
     });
+
     var t;
     qEl.addEventListener("input", function () { clearTimeout(t); t = setTimeout(applyFilter, 220); });
     onlyEl.addEventListener("change", applyFilter);
-    stickyEl.querySelectorAll(".colsw button").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var on = b.getAttribute("aria-pressed") !== "true";
-        var vis = stickyEl.querySelectorAll('.colsw button[aria-pressed="true"]').length;
-        if (!on && vis <= 1) return; // 最低1列は表示
-        b.setAttribute("aria-pressed", on ? "true" : "false");
-        layoutCols();
-      });
+    syncEl.addEventListener("change", function () {
+      syncOn = syncEl.checked;
+      if (syncOn && activeKey) syncAll(activeKey, null);
     });
-    app.addEventListener("click", function (e) {
-      var a = e.target.closest('a[href^="#"]');
-      if (!a) return;
-      e.preventDefault();
-      goTo(a.getAttribute("href").slice(1), true);
+    app.querySelectorAll(".colsw button").forEach(function (b) {
+      b.addEventListener("click", function () { toggleCol(b.getAttribute("data-col")); });
     });
-    window.addEventListener("resize", measure);
-    measure();
+    app.addEventListener("click", onClick);
+    window.addEventListener("resize", layout);
+
+    layout();
     applyFilter();
-    if (location.hash.length > 1) setTimeout(function () { goTo(decodeURIComponent(location.hash.slice(1)), false); }, 60);
+    activeKey = panes.law.items.length ? panes.law.items[0].k : null;
+    markCur();
+    if (location.hash.length > 1) setTimeout(function () { goTo(decodeURIComponent(location.hash.slice(1)), false); }, 80);
   }
 
-  function layoutCols() {
-    var w = { law: "minmax(0,1fr)", ord: "minmax(0,1fr)", reg: "minmax(0,1.25fr)" }, tpl = [];
-    COLS.forEach(function (c) {
-      var on = stickyEl.querySelector('.colsw button[data-col="' + c + '"]').getAttribute("aria-pressed") === "true";
-      app.classList.toggle("hide-" + c, !on);
-      if (on) tpl.push(w[c]);
+  /* ---------- 列のスクロールと連動 ---------- */
+  function visibleCols() {
+    return COLS.filter(function (c) { return !panes[c].pane.hidden; });
+  }
+  // 列 c の上端付近にある「法の条」（施行令・規則の列ではまとまり）のキー
+  function currentKey(c) {
+    var p = panes[c], y = p.pb.scrollTop + 44, cur = null, first = null;
+    for (var i = 0; i < p.items.length; i++) {
+      var el = p.items[i].el;
+      if (el.hidden) continue;
+      if (first === null) first = p.items[i].k;
+      if (el.offsetTop <= y) cur = p.items[i].k; else break;
+    }
+    return cur || first;
+  }
+  function scrollPaneTo(c, k, el) {
+    var p = panes[c];
+    el = el || p.map[k];
+    if (!el || el.hidden || p.pane.hidden) return;
+    p.lock = Date.now() + 250;
+    p.last = k;
+    p.pb.scrollTop = Math.max(0, el.offsetTop - 6);
+  }
+  function syncAll(k, from) {
+    visibleCols().forEach(function (c) {
+      if (c !== from && currentKey(c) !== k) scrollPaneTo(c, k);
     });
-    app.style.setProperty("--cols", tpl.join(" "));
-    measure();
+  }
+  function markCur() {
+    COLS.forEach(function (c) {
+      panes[c].items.forEach(function (it) { it.el.classList.toggle("cur", it.k === activeKey); });
+    });
+  }
+  function bindPane(c) {
+    var p = panes[c];
+    var touch = function (ms) { return function () { p.user = Date.now() + ms; }; };
+    p.pb.addEventListener("wheel", touch(700), { passive: true });
+    p.pb.addEventListener("touchstart", touch(1500), { passive: true });
+    p.pb.addEventListener("touchmove", touch(1500), { passive: true });
+    p.pb.addEventListener("touchend", touch(1500), { passive: true });
+    p.pb.addEventListener("pointerdown", touch(4000));
+    p.pb.addEventListener("pointerup", touch(400));
+    p.pb.addEventListener("pointermove", function (e) { if (e.buttons) p.user = Date.now() + 800; }, { passive: true });
+    p.pb.addEventListener("keydown", touch(800));
+    p.pb.addEventListener("scroll", function () {
+      if (p.raf) return;
+      p.raf = requestAnimationFrame(function () {
+        p.raf = 0;
+        var now = Date.now(), k = currentKey(c);
+        // 他の列から動かされたスクロール、またはユーザー操作でないスクロールは連動の起点にしない
+        if (now < p.lock || now > p.user) { p.last = k; return; }
+        if (k === p.last) return;
+        p.last = k;
+        activeKey = k;
+        markCur();
+        if (syncOn) syncAll(k, c);
+      });
+    }, { passive: true });
   }
 
-  // 固定ヘッダーの高さを測り、条文の固定表示（短い条だけ）を切り替える
-  function measure() {
+  /* ---------- 列の表示・レイアウト ---------- */
+  function layout() {
+    var was = narrow;
+    narrow = window.matchMedia("(max-width:900px)").matches;
+    if (was && !narrow) app.querySelectorAll(".colsw button").forEach(function (b) { b.setAttribute("aria-pressed", "true"); });
     var bar = document.querySelector(".bar");
     var barH = bar ? bar.offsetHeight : 0;
-    var narrow = window.matchMedia("(max-width:900px)").matches;
-    document.documentElement.style.setProperty("--barh", barH + "px");
-    var st = barH + (narrow ? 0 : stickyEl.offsetHeight) + 8;
-    document.documentElement.style.setProperty("--st", st + "px");
-    var avail = window.innerHeight - st - 16;
-    var cins = bodyEl.querySelectorAll(".sd-row:not([hidden]) .cell.law .cin, .sd-row:not([hidden]) .cell.ord .cin");
-    cins.forEach(function (c) { c.classList.remove("stick", "stickscroll"); });
-    if (narrow) return;
-    // 先に全部の高さを読んでからクラスを付ける（レイアウトの再計算を1回で済ませる）
-    var m = [];
-    cins.forEach(function (c) { m.push([c, c.offsetHeight, c.closest(".sd-row").offsetHeight]); });
-    m.forEach(function (x) {
-      var c = x[0], h = x[1], rowH = x[2];
-      if (rowH <= h + 40) return;            // この列がいちばん長い → そのまま
-      c.classList.add(h < avail ? "stick" : "stickscroll");
+    // 3列を、ページを開いたときの画面の残りの高さにぴったり収める
+    var top = panesEl.getBoundingClientRect().top + window.scrollY;
+    var h = Math.max(420, window.innerHeight - Math.max(top, barH) - 14);
+    if (window.scrollY > 0) h = Math.max(420, window.innerHeight - barH - 18);
+    app.style.setProperty("--paneh", h + "px");
+    applyCols();
+    // 3列の見出しの高さをそろえる（本文の開始位置を合わせる）
+    var heads = app.querySelectorAll(".ph"), mx = 0;
+    heads.forEach(function (x) { x.style.minHeight = ""; });
+    if (!narrow) {
+      heads.forEach(function (x) { if (x.offsetParent) mx = Math.max(mx, x.offsetHeight); });
+      heads.forEach(function (x) { x.style.minHeight = mx + "px"; });
+    }
+  }
+  function isOn(c) {
+    return app.querySelector('.colsw button[data-col="' + c + '"]').getAttribute("aria-pressed") === "true";
+  }
+  function applyCols() {
+    var w = { law: "minmax(0,1fr)", ord: "minmax(0,1fr)", reg: "minmax(0,1.25fr)" }, tpl = [];
+    COLS.forEach(function (c) {
+      var show = narrow ? c === narrowCol : isOn(c);
+      var wasHidden = panes[c].pane.hidden;
+      panes[c].pane.hidden = !show;
+      if (show) tpl.push(narrow ? "minmax(0,1fr)" : w[c]);
+      if (narrow) app.querySelector('.colsw button[data-col="' + c + '"]').setAttribute("aria-pressed", show ? "true" : "false");
+      if (show && wasHidden && activeKey) scrollPaneTo(c, activeKey);
     });
+    panesEl.style.setProperty("--cols", tpl.join(" "));
+  }
+  function toggleCol(c) {
+    if (narrow) { narrowCol = c; applyCols(); return; }
+    var b = app.querySelector('.colsw button[data-col="' + c + '"]');
+    var on = b.getAttribute("aria-pressed") !== "true";
+    if (!on && visibleCols().length <= 1) return; // 最低1列は表示
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    applyCols();
+  }
+  function showCol(c) {
+    if (narrow) { narrowCol = c; applyCols(); return; }
+    var b = app.querySelector('.colsw button[data-col="' + c + '"]');
+    if (b.getAttribute("aria-pressed") !== "true") { b.setAttribute("aria-pressed", "true"); applyCols(); }
   }
 
+  /* ---------- 絞り込み・検索 ---------- */
   function clearMarks() {
-    bodyEl.querySelectorAll("mark.hit").forEach(function (m) {
+    app.querySelectorAll("mark.hit").forEach(function (m) {
       var p = m.parentNode;
       p.replaceChild(document.createTextNode(m.textContent), m);
       p.normalize();
@@ -247,39 +367,72 @@
       node.parentNode.replaceChild(frag, node);
     });
   }
-
   function applyFilter() {
-    var raw = qEl.value.trim(), q = norm(raw), only = onlyEl.checked, shown = 0, total = 0;
+    var raw = qEl.value.trim(), q = norm(raw), only = onlyEl.checked, shown = 0;
     clearMarks();
-    rows.forEach(function (r) {
-      if (r.head) return;
-      total++;
+    rowsInfo.forEach(function (r) {
       var ok = (!only || r.has) && (!q || r.idx.indexOf(q) >= 0);
-      r.el.hidden = !ok;
-      if (ok) { shown++; if (raw) markIn(r.el, raw); }
+      if (ok) shown++;
+      COLS.forEach(function (c) {
+        var el = panes[c].map[r.k];
+        if (!el) return;
+        el.hidden = !ok;
+        if (ok && raw) markIn(el, raw);
+      });
     });
-    // 章見出し：配下の行がすべて非表示なら隠す
-    for (var i = 0; i < rows.length; i++) {
-      if (!rows[i].head) continue;
-      var any = false;
-      for (var j = i + 1; j < rows.length && !rows[j].head; j++) if (!rows[j].el.hidden) { any = true; break; }
-      rows[i].el.hidden = !any;
+    // 章見出し：配下がすべて非表示なら隠す
+    COLS.forEach(function (c) {
+      var kids = panes[c].pb.children;
+      for (var i = 0; i < kids.length; i++) {
+        if (!kids[i].classList.contains("sd-chap")) continue;
+        var any = false;
+        for (var j = i + 1; j < kids.length && !kids[j].classList.contains("sd-chap"); j++) if (!kids[j].hidden) { any = true; break; }
+        kids[i].hidden = !any;
+      }
+    });
+    cntEl.textContent = (q || only) ? shown + " / " + rowsInfo.length + " 条" :
+      "法律 " + data.counts.law + "条・施行令 " + data.counts.ord + "条・施行規則 " + data.counts.reg + "条";
+    if (q || only) {
+      COLS.forEach(function (c) { panes[c].pb.scrollTop = 0; panes[c].last = null; });
+      var first = rowsInfo.filter(function (r) { return !panes.law.map[r.k].hidden; })[0];
+      if (first) { activeKey = first.k; markCur(); }
+    } else if (activeKey) {
+      syncAll(activeKey, null);
     }
-    cntEl.textContent = (q || only) ? shown + " / " + total + " 条" : "法律 " + data.counts.law + "条・施行令 " + data.counts.ord + "条・施行規則 " + data.counts.reg + "条";
-    measure();
   }
 
+  /* ---------- ジャンプ・リンク ---------- */
+  function flash(el) {
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+  }
   function goTo(id, push) {
     var el = document.getElementById(id);
     if (!el) return;
-    var row = el.closest(".sd-row");
-    if (row && row.hidden) { qEl.value = ""; onlyEl.checked = false; applyFilter(); }
-    var col = id.charAt(0) === "h" ? "law" : id.charAt(0) === "o" ? "ord" : "reg";
-    var btn = stickyEl.querySelector('.colsw button[data-col="' + col + '"]');
-    if (btn && btn.getAttribute("aria-pressed") !== "true") { btn.setAttribute("aria-pressed", "true"); layoutCols(); }
-    el.scrollIntoView({ block: "start" });
-    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+    var c = id.charAt(0) === "h" ? "law" : id.charAt(0) === "o" ? "ord" : id.charAt(0) === "r" ? "reg" : null;
+    if (id.indexOf("g-o-") === 0) c = "ord";
+    if (id.indexOf("g-r-") === 0) c = "reg";
+    if (!c) return;
+    var k = el.getAttribute("data-k");
+    if (el.hidden || (el.closest(".grp") && el.closest(".grp").hidden)) { qEl.value = ""; onlyEl.checked = false; applyFilter(); }
+    showCol(c);
+    scrollPaneTo(c, k, el);
+    activeKey = k;
+    markCur();
+    if (syncOn) syncAll(k, c);
+    flash(el.classList.contains("grp") ? el.querySelector(".gh") : el);
     if (push) history.replaceState(null, "", "#" + id);
+  }
+  function onClick(e) {
+    var mk = e.target.closest("mark.dg");
+    if (mk) {
+      var holder = mk.closest("[data-k]");
+      if (holder) goTo((mk.classList.contains("dg-o") ? "g-o-" : "g-r-") + holder.getAttribute("data-k"), true);
+      return;
+    }
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    e.preventDefault();
+    goTo(a.getAttribute("href").slice(1), true);
   }
 
   fetch(app.getAttribute("data-src") + "?ts=" + Date.now(), { cache: "no-store" })
@@ -292,18 +445,8 @@
         r.ord.forEach(function (a) { has.ord[a.k] = 1; titles.ord[a.k] = a.t; });
         r.reg.forEach(function (a) { has.reg[a.k] = 1; titles.reg[a.k] = a.t; });
       });
-      var meta = document.getElementById("sdMeta");
-      if (meta) {
-        meta.innerHTML = COLS.map(function (c) {
-          var m = d.laws[c];
-          var am = m.amend_num ? "　最終改正：" + esc(m.amend_num) + (m.enforced ? "（" + esc(m.enforced) + " 施行）" : "") : "";
-          return '<div class="lw"><span class="tag ' + c + '">' + d.labels[c] + '</span><a href="' + esc(m.url) + '" target="_blank" rel="noopener">' +
-            esc(m.title) + "</a><span>（" + esc(m.num) + "）" + am + "</span></div>";
-        }).join("") +
-          '<div class="legend">色分け：<mark class="dg dg-o">政令で定め</mark>る → 施行令の列　' +
-          '<mark class="dg dg-r">主務省令で定め</mark>る → 施行規則の列　／　' +
-          '<a class="ref rl">法第○条</a>・<a class="ref ro">令第○条</a> は該当条へのリンク　／　データ更新日 ' + esc(d.updated || "") + "（e-Gov法令API）</div>";
-      }
+      var up = document.getElementById("sdUpdated");
+      if (up) up.textContent = d.updated || "";
       render();
     })
     .catch(function (e) {

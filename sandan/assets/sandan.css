@@ -1,74 +1,77 @@
-/* 法令三段表（sandan.js が #sdApp に描画） */
+/* 法令三段表（sandan.js が #sdApp に描画）
+   3つの列がそれぞれ独立してスクロールし、どの列を動かしても他の列が対応箇所へ連動する */
 :root{
-  --c-law:#e0679d; --c-law-soft:#fbe3ef;
-  --c-ord:#3f9a50; --c-ord-soft:#e3f5df;
-  --c-reg:#3963c9; --c-reg-soft:#e3ecfb;
+  --c-law:#e0679d; --c-ord:#3f9a50; --c-reg:#3963c9;
+  --t-law:#b13f73; --t-ord:#2c7a3c; --t-reg:#2a4ea6;
   --line:#3a3352;
-  --cols:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr);
-  --barh:52px; --st:140px;
 }
-main.sd-wrap{max-width:1880px;padding-top:22px}
-.sd-wrap h1.page-title{margin-bottom:6px}
+main.sd-wrap{max-width:1880px;padding-top:14px;padding-bottom:30px}
+.sd-titlerow{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:10px}
+.sd-titlerow h1.page-title{margin:0;font-size:22px}
+.sd-titlerow .sub{margin:0;font-size:12.5px}
 
-/* ---- 法令情報 ---- */
-.sd-meta{background:rgba(255,255,255,.93);border:3px solid var(--ink);box-shadow:var(--hard);padding:12px 16px;margin:12px 0 16px;font-size:12.5px;line-height:1.9;color:var(--muted)}
-.sd-meta .lw{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-.sd-meta .tag{font-family:var(--dot);font-size:11px;letter-spacing:1px;color:#fff;padding:0 7px;border:2px solid var(--ink)}
-.sd-meta .tag.law{background:var(--c-law)} .sd-meta .tag.ord{background:var(--c-ord)} .sd-meta .tag.reg{background:var(--c-reg)}
-.sd-meta a{color:var(--ink);font-weight:700}
-.sd-meta .legend{margin-top:4px}
-.sd-meta .legend mark{margin:0 2px}
-
-/* ---- 固定ヘッダー（操作バー＋列見出し） ---- */
-.sd-sticky{position:sticky;top:var(--barh);z-index:5;background:var(--paper);border:3px solid var(--ink);border-bottom:none}
-.sd-tools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:9px 12px;border-bottom:2px solid var(--line);background:#fffdf9}
-.sd-tools select,.sd-tools input[type=search]{font-family:inherit;font-size:13.5px;color:var(--ink);background:#fff;border:2px solid var(--line);padding:6px 9px;outline:none}
-.sd-tools select{max-width:min(340px,100%)}
-.sd-tools input[type=search]{width:min(300px,100%)}
+/* ---- 操作バー ---- */
+#sdApp{border:3px solid var(--ink);box-shadow:var(--hard);background:var(--paper)}
+.sd-tools{display:flex;flex-wrap:wrap;gap:7px 12px;align-items:center;padding:8px 12px;border-bottom:2px solid var(--line);background:#fffdf9}
+.sd-tools select,.sd-tools input[type=search]{font-family:inherit;font-size:13px;color:var(--ink);background:#fff;border:2px solid var(--line);padding:5px 8px;outline:none}
+.sd-tools select{max-width:min(320px,100%)}
+.sd-tools input[type=search]{width:min(280px,100%)}
 .sd-tools input:focus-visible,.sd-tools select:focus-visible{box-shadow:0 0 0 3px var(--pink-soft)}
-.sd-tools .cnt{font-family:var(--dot);font-size:12px;letter-spacing:1px;color:var(--muted)}
-.sd-tools .chk{font-size:13px;display:inline-flex;gap:5px;align-items:center;cursor:pointer;user-select:none}
+.sd-tools .cnt{font-family:var(--dot);font-size:11.5px;letter-spacing:1px;color:var(--muted)}
+.sd-tools .chk{font-size:12.5px;display:inline-flex;gap:5px;align-items:center;cursor:pointer;user-select:none;white-space:nowrap}
+.sd-tools .chk.sync{font-weight:700}
 .sd-tools .colsw{display:inline-flex;gap:6px;align-items:center;margin-left:auto;font-size:12px;color:var(--muted)}
 .sd-tools .colsw button{font-family:var(--dot);font-size:11.5px;letter-spacing:1px;padding:3px 9px;border:2px solid var(--ink);cursor:pointer;color:#fff}
 .sd-tools .colsw button[data-col=law]{background:var(--c-law)}
 .sd-tools .colsw button[data-col=ord]{background:var(--c-ord)}
 .sd-tools .colsw button[data-col=reg]{background:var(--c-reg)}
-.sd-tools .colsw button[aria-pressed=false]{background:#fff;color:#aaa3bd;border-color:#c9c4d6;text-decoration:line-through}
+.sd-tools .colsw button[aria-pressed=false]{background:#fff;color:#aaa3bd;border-color:#c9c4d6}
 
-.grid3{display:grid;grid-template-columns:var(--cols)}
-.sd-colhead > div{font-family:var(--dot);font-size:13.5px;letter-spacing:1px;padding:7px 12px;color:#fff;border-right:2px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sd-colhead > div:last-child{border-right:none}
-.sd-colhead small{font-family:var(--sans);font-size:11px;letter-spacing:0;opacity:.92;margin-left:6px}
-.sd-colhead .law{background:var(--c-law)} .sd-colhead .ord{background:var(--c-ord)} .sd-colhead .reg{background:var(--c-reg)}
+/* ---- 3つの列 ---- */
+.sd-panes{display:grid;grid-template-columns:var(--cols,minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr));height:var(--paneh,70vh)}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:2px solid var(--line)}
+.pane:last-child{border-right:none}
+.pane[hidden]{display:none}
+.ph{flex:none;padding:7px 12px 8px;color:#fff;line-height:1.55}
+.ph.law{background:var(--c-law)} .ph.ord{background:var(--c-ord)} .ph.reg{background:var(--c-reg)}
+.ph .pt{display:flex;gap:8px;align-items:baseline;min-width:0}
+.ph .tag{font-family:var(--dot);font-size:14px;letter-spacing:1px;flex:none}
+.ph .pt a{color:#fff;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ph .pv{font-size:12px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph .pv b{background:rgba(255,255,255,.95);color:var(--ink);padding:0 6px;margin-right:4px}
+.ph .pv small{opacity:.92}
+.ph .pp{font-size:11.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;background:rgba(255,255,255,.18);padding:1px 6px;border-left:3px solid #ffd94a}
+.pb{flex:1;min-height:0;overflow-y:auto;position:relative;padding:4px 12px 40vh;overscroll-behavior:contain;
+  scrollbar-width:thin;scrollbar-color:#b9b2cc transparent}
+.pb:focus{outline:none}
+.pane.law .pb{background:#fffafc} .pane.ord .pb{background:#fbfffa} .pane.reg .pb{background:#fafcff}
 
-/* ---- 本体 ---- */
-.sd-body{border:3px solid var(--ink);border-top:2px solid var(--line);background:rgba(255,255,255,.96);box-shadow:var(--hard)}
-.sd-chap{font-family:var(--dot);font-size:14px;letter-spacing:1px;padding:8px 14px;background:#f1edf7;border-bottom:2px solid var(--line);color:var(--ink)}
-.sd-chap[hidden],.sd-row[hidden]{display:none}
-.sd-row{border-bottom:2px solid var(--line);scroll-margin-top:var(--st)}
-.sd-row:last-child{border-bottom:none}
-.cell{padding:10px 12px;border-right:2px solid var(--line);min-width:0}
-.cell:last-child{border-right:none}
-.cell.law{background:#fffafc} .cell.ord{background:#fbfffa} .cell.reg{background:#fafcff}
-.cell .cin.stick{position:sticky;top:var(--st)}
-/* 隣の列が長い行では、法・令の条文を画面内に留めて枠内スクロールにする */
-.cell .cin.stickscroll{position:sticky;top:var(--st);max-height:calc(100vh - var(--st) - 14px);overflow-y:auto;padding-right:6px;
-  scrollbar-width:thin;scrollbar-color:#b9b2cc transparent;border-bottom:2px dashed #ddd8e7}
-.cell .empty{color:#c3bed1;font-size:12px}
-.hide-law .law,.hide-ord .ord,.hide-reg .reg{display:none !important}
+.sd-chap{font-family:var(--dot);font-size:12.5px;letter-spacing:1px;padding:5px 10px;margin:10px -12px 6px;background:#f1edf7;border-top:2px solid #d9d3e6;border-bottom:2px solid #d9d3e6;color:var(--ink)}
+.sd-chap[hidden],.art[hidden],.grp[hidden]{display:none}
 
-.art{scroll-margin-top:var(--st);font-size:13.5px;line-height:1.8;color:var(--ink)}
-.art + .art{margin-top:14px;padding-top:12px;border-top:1px dashed #cfc9dc}
-.art.flash{animation:sd-flash 1.6s ease-out}
+/* 施行令・施行規則の列：法の条ごとのまとまり */
+.grp{padding:2px 0 8px;scroll-margin-top:4px}
+.grp .gh{display:block;font-size:11.5px;font-weight:700;margin:8px 0 6px;padding:2px 8px;border-left:4px solid var(--c-law);background:#fff5f9;color:var(--t-law);text-decoration:none}
+.grp .gh:hover{text-decoration:underline}
+.grp.empty{padding:0}
+.grp.empty .gh{font-weight:400;color:#a59fb8;background:transparent;border-left-color:#e4dfee;margin:3px 0}
+.grp.empty .gh::after{content:"　— 対応する条なし"}
+.grp.cur .gh,.art.cur > .ah{box-shadow:inset 3px 0 0 #ffd94a}
+.art.cur > .ah{padding-left:6px}
+
+.art{font-size:13.5px;line-height:1.8;color:var(--ink);padding:6px 0}
+.grp .art + .art{margin-top:6px;padding-top:12px;border-top:1px dashed #cfc9dc}
+.pane.law .art{border-bottom:1px dashed #e7c7d6;padding:10px 0}
+.flash{animation:sd-flash 1.6s ease-out}
 @keyframes sd-flash{0%{background:#ffe98a}100%{background:transparent}}
 .ah{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-bottom:4px}
-.ah .at{font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
-.law .ah .at{color:#b13f73} .ord .ah .at{color:#2c7a3c} .reg .ah .at{color:#2a4ea6}
+.ah .at{font-weight:700;font-size:14px;text-decoration:none}
+.pane.law .ah .at{color:var(--t-law)} .pane.ord .ah .at{color:var(--t-ord)} .pane.reg .ah .at{color:var(--t-reg)}
 .ah .at:hover{text-decoration:underline}
 .ah .ac{color:var(--muted);font-size:12.5px}
 .chip{font-size:10.5px;line-height:1.5;padding:0 6px;border:1.5px solid;text-decoration:none;white-space:nowrap}
-.chip.cl{color:#b13f73;border-color:#e7a3c2;background:#fff5f9}
-.chip.co{color:#2c7a3c;border-color:#9fd3a8;background:#f4fbf3}
+.chip.cl{color:var(--t-law);border-color:#e7a3c2;background:#fff5f9}
+.chip.co{color:var(--t-ord);border-color:#9fd3a8;background:#f4fbf3}
 .chip.cn{color:#8b84a3;border-color:#d3cfe0;background:#f7f6fa;cursor:help}
 .ln{margin:2px 0;padding-left:1em;text-indent:-1em;word-break:break-all}
 .ln .lb{font-weight:700;margin-right:.45em}
@@ -81,32 +84,30 @@ table.ltbl{border-collapse:collapse;font-size:12.5px;line-height:1.7;width:100%}
 .ltbl th,.ltbl td{border:1.5px solid #8f88a8;padding:4px 7px;vertical-align:top;text-align:left;white-space:pre-line;min-width:6.5em}
 .ltbl th{background:#f1edf7;font-weight:700}
 .sub-appdx + .sub-appdx{margin-top:12px}
-.sub-appdx .st{font-weight:700;color:#b13f73}
+.sub-appdx .st{font-weight:700;color:var(--t-law)}
 
-mark.dg{padding:0 1px;color:inherit;border-bottom:2px solid}
+mark.dg{padding:0 1px;color:inherit;border-bottom:2px solid;cursor:pointer}
 mark.dg-o{background:#c9efc2;border-color:var(--c-ord)}
 mark.dg-r{background:#cfdffb;border-color:var(--c-reg)}
+mark.dg:hover{filter:brightness(.93)}
 mark.hit{background:#ffe066;color:inherit;outline:1px solid #e0b300}
 a.ref{text-decoration:none;border-bottom:1.5px dotted;font-weight:600}
-a.ref.rl{color:#b13f73} a.ref.ro{color:#2c7a3c}
+a.ref.rl{color:var(--t-law)} a.ref.ro{color:var(--t-ord)}
 a.ref:hover{border-bottom-style:solid}
-.rel{margin-top:12px;padding-top:8px;border-top:1px solid #e2deeb;font-size:12px;color:var(--muted);line-height:1.8}
+.rel{margin-top:8px;padding-top:6px;border-top:1px solid #e2deeb;font-size:12px;color:var(--muted);line-height:1.8}
 .rel a{color:inherit;font-weight:700}
 
-.sd-warn{background:#fff7dd;border:2px solid #c9a227;box-shadow:3px 3px 0 rgba(58,51,82,.12);padding:10px 14px;font-size:12.5px;line-height:1.9;margin-top:22px;color:var(--ink)}
+.sd-legend{font-size:12px;color:var(--muted);line-height:1.9;margin-top:12px}
+.sd-legend mark{cursor:default}
+.sd-warn{background:#fff7dd;border:2px solid #c9a227;box-shadow:3px 3px 0 rgba(58,51,82,.12);padding:10px 14px;font-size:12.5px;line-height:1.9;margin-top:12px;color:var(--ink)}
 .sd-warn b{color:#8a6100}
 .sd-loading{padding:40px;text-align:center;font-family:var(--dot);letter-spacing:1px;color:var(--muted)}
 
-/* ---- スマホ：縦に積む ---- */
+/* ---- スマホ：1列ずつタブで切り替え（連動位置は保持） ---- */
 @media (max-width:900px){
-  .grid3{grid-template-columns:1fr !important}
-  .sd-colhead{display:none}
   .sd-tools .colsw{margin-left:0}
-  .cell{border-right:none;border-bottom:1px solid #e2deeb}
-  .cell::before{display:inline-block;font-family:var(--dot);font-size:11px;letter-spacing:1px;color:#fff;padding:0 7px;margin-bottom:6px;border:2px solid var(--ink)}
-  .cell.law::before{content:"法律";background:var(--c-law)}
-  .cell.ord::before{content:"施行令";background:var(--c-ord)}
-  .cell.reg::before{content:"施行規則";background:var(--c-reg)}
-  .cell .cin.stick,.cell .cin.stickscroll{position:static;max-height:none;overflow:visible;border-bottom:none}
-  .sd-sticky{position:static}
+  .ph .pt a{white-space:normal}
 }
+
+/* このページでは前景の桜の枝を表の背面に回す（操作バーに重ならないように） */
+body.sd-page .px-fg{z-index:0}

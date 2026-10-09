@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../../assets/sakura.css">
 <link rel="stylesheet" href="../assets/sandan.css">
 </head>
-<body>
+<body class="sd-page">
 
 <div class="bar">
   <a class="logo" href="../../">✿</a>
@@ -21,14 +21,21 @@
 </div>
 
 <main class="wrap sd-wrap">
-  <h1 class="page-title">📑 犯収法 三段表</h1>
-  <p class="sub" style="margin-bottom:0">法律・施行令・施行規則を左右に並べ、「政令で定める」「主務省令で定める」の中身をすぐ確認できるようにしています。</p>
-  <div class="sd-meta" id="sdMeta">LOADING...</div>
+  <div class="sd-titlerow">
+    <h1 class="page-title">📑 犯収法 三段表</h1>
+    <p class="sub">法律・施行令・施行規則を並べて、「政令で定める」「主務省令で定める」の中身をすぐ確認できます。各列は個別にスクロールでき、連動もします。</p>
+  </div>
 
   <div id="sdApp" data-src="data.json"><div class="sd-loading">LOADING...</div></div>
 
-  <div class="sd-warn">⚠️ e-Gov法令APIから取得した現行の条文（本則・別表）を自動で整形しています。附則・様式は収録していません。
-    施行令・施行規則の各条をどの行に置くかは、条文中の「法第○条」「令第○条」の引用（括弧書きの外にある引用を優先）から機械的に判定したもので、法令上の対応関係を保証するものではありません。
+  <div class="sd-legend">
+    使い方：<mark class="dg dg-o">政令で定め</mark>る（緑）は施行令の列、<mark class="dg dg-r">主務省令で定め</mark>る（青）は施行規則の列に中身があります。色付きの語をクリックすると、その列の該当箇所へ移動します。
+    <a class="ref rl">法第○条</a>・<a class="ref ro">令第○条</a> はその条へのリンクです。
+    「🔗 連動スクロール」がONのとき、どの列をスクロールしても他の2列が同じ法の条に対応する箇所へ追従します（OFFにすると各列を自由に読めます）。
+    データ更新日：<span id="sdUpdated"></span>（e-Gov法令API・毎週自動更新）
+  </div>
+  <div class="sd-warn">⚠️ e-Gov法令APIから取得した条文（本則・別表）を自動で整形しています。附則・様式は収録していません。各列の見出しに、どの時点で施行されている内容かを表示しています。
+    施行令・施行規則の各条をどの法の条のまとまりに置くかは、条文中の「法第○条」「令第○条」の引用（括弧書きの外にある引用を優先）から機械的に判定したもので、法令上の対応関係を保証するものではありません。
     <b>正確な条文・改正状況は必ずe-Gov法令検索の原文をご確認ください。</b></div>
 </main>
 
