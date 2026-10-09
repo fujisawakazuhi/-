@@ -86,26 +86,74 @@ def find_law_el(root):
     return el
 
 
+REV_KEYS = ("law_revision_id", "amendment_enforcement_date", "amendment_law_title",
+            "amendment_law_num", "amendment_promulgate_date", "current_revision_status",
+            "amendment_scheduled_enforcement_date", "amendment_enforcement_comment", "updated")
+
+
+def flat_rev(x):
+    """改正履歴の1件を平らな dict にする（revision_info 入れ子にも対応）"""
+    r = dict(x.get("revision_info") or {})
+    for k, v in x.items():
+        if not isinstance(v, (dict, list)):
+            r.setdefault(k, v)
+    return r
+
+
+def revisions(law_id, today):
+    """(現在施行中の版, [未施行の版...]) を返す"""
+    d = json.loads(get(f"{API2}/law_revisions/{urllib.parse.quote(law_id)}?response_format=json"))
+    items = d.get("revisions") or d.get("law_revisions") or []
+    revs = [flat_rev(x) for x in items]
+    print("  law_revisions:", len(revs), "revisions; top keys", sorted(d.keys()))
+    if revs:
+        print("   sample:", {k: revs[0].get(k) for k in REV_KEYS})
+    cur, pending = None, []
+    for r in revs:
+        st = (r.get("current_revision_status") or "")
+        ed = (r.get("amendment_enforcement_date") or "")[:10]
+        if st == "CurrentEnforced":
+            cur = r
+        elif st == "UnEnforced" or (ed and ed > today and st not in ("PreviousEnforced", "Repeal")):
+            pending.append(r)
+    if cur is None:  # ステータスが無い場合は施行日が今日以前で最新のもの
+        past = [r for r in revs if (r.get("amendment_enforcement_date") or "")[:10] <= today]
+        past.sort(key=lambda r: r.get("amendment_enforcement_date") or "")
+        cur = past[-1] if past else None
+    pending.sort(key=lambda r: r.get("amendment_enforcement_date") or "")
+    return cur, pending
+
+
 def fetch_law(law_id):
-    """(Law要素, メタ情報dict) を返す。v2 → v2 law_file → v1 の順に試す"""
+    """(Law要素, メタ情報dict) を返す。
+    改正履歴から「現在施行中の版」を特定し、その版の本文を取得する。"""
     errs = []
+    today = datetime.datetime.now(JST).strftime("%Y-%m-%d")
+    cur, pending = None, []
+    try:
+        cur, pending = revisions(law_id, today)
+        print("  current:", {k: (cur or {}).get(k) for k in REV_KEYS})
+        print("  pending:", [(r.get("amendment_enforcement_date"), r.get("amendment_law_title")) for r in pending])
+    except Exception as e:
+        print("  law_revisions failed:", repr(e))
+    meta = {"revision_info": cur or {}, "pending": pending}
+    target = (cur or {}).get("law_revision_id") or law_id
+    try:
+        raw = get(f"{API2}/law_file/xml/{urllib.parse.quote(target)}")
+        print("  v2 law_file ok:", target)
+        return find_law_el(ET.fromstring(raw)), meta
+    except Exception as e:
+        errs.append(f"v2 law_file {target}: {e!r}")
     try:
         url = f"{API2}/law_data/{urllib.parse.quote(law_id)}?" + urllib.parse.urlencode(
-            {"response_format": "json", "law_full_text_format": "xml"})
+            {"response_format": "json", "law_full_text_format": "xml", "asof": today})
         d = json.loads(get(url))
         lft = d.get("law_full_text")
         root = ET.fromstring(lft) if isinstance(lft, str) else jt2et(lft)
-        meta = {"law_info": d.get("law_info") or {}, "revision_info": d.get("revision_info") or {}}
-        print("  v2 law_data ok; revision_info keys:", sorted(meta["revision_info"].keys()))
-        return find_law_el(root), meta
+        print("  v2 law_data ok")
+        return find_law_el(root), {"revision_info": d.get("revision_info") or cur or {}, "pending": pending}
     except Exception as e:
         errs.append(f"v2 law_data: {e!r}")
-    try:
-        raw = get(f"{API2}/law_file/xml/{urllib.parse.quote(law_id)}")
-        print("  v2 law_file ok")
-        return find_law_el(ET.fromstring(raw)), {}
-    except Exception as e:
-        errs.append(f"v2 law_file: {e!r}")
     try:
         raw = get(f"{API1}/lawdata/{urllib.parse.quote(law_id)}")
         print("  v1 lawdata ok")
@@ -424,9 +472,14 @@ def meta_summary(meta, law_id, title, num):
            "url": f"https://laws.e-gov.go.jp/law/{law_id}"}
     for src, dst in (("amendment_law_num", "amend_num"), ("amendment_law_title", "amend_title"),
                      ("amendment_enforcement_date", "enforced"),
-                     ("amendment_promulgate_date", "promulgated")):
+                     ("amendment_promulgate_date", "promulgated"),
+                     ("law_revision_id", "rev")):
         if ri.get(src):
-            out[dst] = ri[src]
+            out[dst] = str(ri[src])[:10] if src.endswith("_date") else ri[src]
+    out["pending"] = [{"enforced": (r.get("amendment_enforcement_date") or "")[:10],
+                       "title": r.get("amendment_law_title") or "",
+                       "num": r.get("amendment_law_num") or ""}
+                      for r in meta.get("pending") or []]
     return out
 
 
