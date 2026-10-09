@@ -140,6 +140,15 @@
   function verText(m) {
     return m.enforced ? wareki(m.enforced) + " 施行の内容" + (m.amend_num ? "（最終改正：" + m.amend_num + "）" : "") : "現行";
   }
+  // カーソルを置く（スマホはタップ）と出る小窓
+  function hint(icon, html, cls) {
+    return '<span class="hint ' + (cls || "") + '" tabindex="0"><span class="ic">' + icon + '</span><span class="pop">' + html + "</span></span>";
+  }
+  function pendHTML(ps) {
+    return "<b>⏳ 未施行の改正（この表には未反映）</b><ul>" + ps.map(function (p) {
+      return "<li>" + esc(wareki(p.enforced)) + " 施行予定<br><small>" + esc((p.num || "") + " " + (p.title || "")) + "</small></li>";
+    }).join("") + "</ul>";
+  }
   function multiHead() {
     var lst = data.regs.map(function (m) {
       var ps = m.pending || [];
@@ -150,17 +159,19 @@
         (ps.length ? '<small class="rp">⏳ 未施行の改正 ' + ps.length + "件（" + esc(wareki(ps[0].enforced)) + (ps.length > 1 ? "〜" : "") + "施行予定）※表には未反映</small>" : "") +
         "</span></label>";
     }).join("");
-    var npend = data.regs.filter(function (m) { return (m.pending || []).length; }).length;
-    return '<div class="ph reg"><div class="pt"><span class="tag">' + data.labels.reg + "</span>" +
-      '<details class="regsel"><summary>' + data.regs.length + "本の府令 ▾ 施行日・表示の切替</summary>" +
-      '<div class="rlist"><div class="rhint">表示する府令を選べます（選択はこの端末に保存）。各府令の施行日もここで確認できます。</div>' + lst + "</div></details></div>" +
-      '<div class="pv" id="sdRegShow"></div>' +
-      (npend ? '<div class="pp">⏳ 未施行の改正がある府令：' + npend + "本（▾の一覧で確認）※表には未反映</div>" : "") + "</div>";
+    var pend = [];
+    data.regs.forEach(function (m) { (m.pending || []).forEach(function (p) { pend.push({ enforced: p.enforced, num: m.short, title: p.num }); }); });
+    pend.sort(function (a, b) { return a.enforced < b.enforced ? -1 : 1; });
+    return '<div class="ph reg"><span class="tag">' + data.labels.reg + "</span>" +
+      '<details class="regsel"><summary><span id="sdRegShow"></span> ▾</summary>' +
+      '<div class="rlist"><div class="rhint">表示する府令を選べます（選択はこの端末に保存）。各府令の施行日もここで確認できます。</div>' + lst + "</div></details>" +
+      (pend.length ? hint("⏳", pendHTML(pend), "r") : "") + "</div>";
   }
   function regShowText() {
     var on = data.regs.filter(function (m) { return regOn[m.key]; });
     var el = document.getElementById("sdRegShow");
-    if (el) el.innerHTML = "<b>表示中 " + on.length + "/" + data.regs.length + "本</b><small>" + esc(on.map(function (m) { return m.short; }).join("・")) + "</small>";
+    if (el) el.textContent = on.length === data.regs.length ? data.regs.length + "本すべて" :
+      on.length === 1 ? on[0].short : on.length + "/" + data.regs.length + "本";
   }
   function applyRegs() {
     if (!multi) return;
@@ -174,34 +185,36 @@
   }
   function paneHead(c) {
     if (c === "reg" && multi) return multiHead();
-    var m = data.laws[c], ver;
-    if (m.enforced) {
-      ver = "<b>" + esc(wareki(m.enforced)) + " 施行の内容</b>" +
-        (m.amend_num ? "<small>最終改正：" + esc(m.amend_num) + "</small>" : "");
-      ver = '<div class="pv" title="' + esc(wareki(m.enforced) + " 施行" + (m.amend_num ? "／最終改正：" + m.amend_num + "（" + (m.amend_title || "") + "）" : "")) + '">' + ver + "</div>";
-    } else {
-      ver = '<div class="pv"><b>現行（e-Gov ' + esc(data.updated || "") + " 取得）</b></div>";
-    }
-    var ps = m.pending || [], pend = "";
-    if (ps.length) {
-      var tip = ps.map(function (p) { return wareki(p.enforced) + " 施行予定：" + (p.num || "") + " " + (p.title || ""); }).join("\n");
-      pend = '<div class="pp" title="' + esc(tip) + '">⏳ 未施行の改正 ' + ps.length + "件（" + esc(wareki(ps[0].enforced)) +
-        (ps.length > 1 ? "〜" : "") + "施行予定）※表には未反映</div>";
-    }
-    return '<div class="ph ' + c + '"><div class="pt"><span class="tag">' + data.labels[c] + '</span><a href="' + esc(m.url) +
-      '" target="_blank" rel="noopener" title="' + esc(m.title + "（" + m.num + "）") + '">' + esc(m.title) + "</a></div>" +
-      ver + pend + "</div>";
+    var m = data.laws[c], ps = m.pending || [], r = c === "reg" ? "r" : "";
+    var info = "<b>" + esc(m.title) + "</b><br><small>" + esc(m.num) + "</small>" +
+      '<div class="ln2">📅 ' + esc(m.enforced ? wareki(m.enforced) + " 施行の内容を表示しています" : "現行の内容（e-Gov " + (data.updated || "") + " 取得）") + "</div>" +
+      (m.amend_num ? '<div class="ln2">最終改正：' + esc(m.amend_num) + (m.amend_title ? "<br><small>" + esc(m.amend_title) + "</small>" : "") + "</div>" : "") +
+      '<div class="ln2"><a href="' + esc(m.url) + '" target="_blank" rel="noopener">e-Gov法令検索で原文を開く ↗</a></div>';
+    return '<div class="ph ' + c + '"><span class="tag">' + data.labels[c] + "</span>" +
+      '<span class="dt">' + esc(m.enforced ? wareki(m.enforced) + "施行" : "現行") + "</span>" +
+      (ps.length ? hint("⏳", pendHTML(ps), r) : "") + hint("ⓘ", info, r) + "</div>";
+  }
+  function helpHTML() {
+    var dr = data.labels.reg === "内閣府令" ? "内閣府令で定め" : "主務省令で定め";
+    return "<b>三段表の使い方</b><ul>" +
+      "<li>" + COLS.map(function (c) { return data.labels[c]; }).join("・") + "を左右に並べています。各列は個別にスクロールでき、「🔗 連動」がONなら他の列が対応する箇所へ付いてきます。</li>" +
+      '<li><mark class="dg dg-o">政令で定め</mark>る → ' + data.labels.ord + 'の列、<mark class="dg dg-r">' + dr + "</mark>る → " + data.labels.reg + "の列に中身があります（クリックで移動）。</li>" +
+      '<li><a class="ref rl">法第○条</a>・<a class="ref ro">令第○条</a> は該当する条へのリンクです。</li>' +
+      "<li>各列の見出しの ⓘ に正式名称・最終改正、⏳ に未施行の改正があります。</li>" +
+      (multi ? "<li>" + data.labels.reg + "の列は見出しの ▾ から表示する府令を選べます。</li>" : "") +
+      "</ul><small>収録：" + COLS.map(function (c) { return data.labels[c] + " " + data.counts[c] + "条"; }).join("・") +
+      "／データ更新日 " + esc(data.updated || "") + "（e-Gov法令API・毎週自動更新）</small>";
   }
 
   function render() {
     document.title = data.short + " 三段表 · マイポータル";
     var tools = '<div class="sd-tools">' +
-      '<select id="sdJump" aria-label="条文へジャンプ"><option value="">📍 条文へジャンプ…</option></select>' +
-      '<input type="search" id="sdQ" placeholder="🔍 3つの法令を横断検索（例：本人確認書類）">' +
-      '<span class="cnt" id="sdCnt"></span>' +
-      '<label class="chk sync" title="どれかの列をスクロールすると、他の列が対応する箇所へ自動で移動します"><input type="checkbox" id="sdSync" checked>🔗 連動スクロール</label>' +
-      '<label class="chk"><input type="checkbox" id="sdOnly">政令・省令の対応がある条だけ</label>' +
-      '<span class="colsw">表示：' + COLS.map(function (c) {
+      '<span class="sw search" data-tip="3つの法令をまとめて検索（例：本人確認書類）"><input type="search" id="sdQ" placeholder="🔍 検索" aria-label="3つの法令を横断検索"><span class="cnt" id="sdCnt"></span></span>' +
+      '<span class="sw" data-tip="条を選んでその位置へ移動"><select id="sdJump" aria-label="条文へジャンプ"><option value="">📍 条へ移動</option></select></span>' +
+      '<span class="sp"></span>' +
+      '<label class="pill on" data-tip="どれかの列をスクロールすると、他の列が対応する箇所へ付いてくる"><input type="checkbox" id="sdSync" checked>🔗 連動</label>' +
+      '<label class="pill" data-tip="政令・省令への委任や対応する条がある条だけを表示"><input type="checkbox" id="sdOnly">委任のある条だけ</label>' +
+      '<span class="colsw" data-tip="クリックで列の表示／非表示">' + COLS.map(function (c) {
         return '<button type="button" data-col="' + c + '" aria-pressed="true">' + data.labels[c] + "</button>";
       }).join("") + "</span></div>";
 
@@ -268,6 +281,9 @@
     var t;
     qEl.addEventListener("input", function () { clearTimeout(t); t = setTimeout(applyFilter, 220); });
     onlyEl.addEventListener("change", applyFilter);
+    [syncEl, onlyEl].forEach(function (cb) {
+      cb.addEventListener("change", function () { cb.parentNode.classList.toggle("on", cb.checked); });
+    });
     syncEl.addEventListener("change", function () {
       syncOn = syncEl.checked;
       if (syncOn && activeKey) syncAll(activeKey, null);
@@ -457,8 +473,7 @@
         kids[i].hidden = !any;
       }
     });
-    cntEl.textContent = (q || only) ? shown + " / " + rowsInfo.length + " 条" :
-      COLS.map(function (c) { return data.labels[c] + " " + data.counts[c] + "条"; }).join("・");
+    cntEl.textContent = (q || only) ? shown + "/" + rowsInfo.length : "";
     if (q || only) {
       COLS.forEach(function (c) { panes[c].pb.scrollTop = 0; panes[c].last = null; });
       var first = rowsInfo.filter(function (r) { return !panes.law.map[r.k].hidden; })[0];
@@ -486,7 +501,7 @@
       if (cb) cb.checked = true;
       applyRegs();
     }
-    if (el.hidden || (el.closest(".grp") && el.closest(".grp").hidden)) { qEl.value = ""; onlyEl.checked = false; applyFilter(); }
+    if (el.hidden || (el.closest(".grp") && el.closest(".grp").hidden)) { qEl.value = ""; onlyEl.checked = false; onlyEl.parentNode.classList.remove("on"); applyFilter(); }
     showCol(c);
     scrollPaneTo(c, k, el);
     activeKey = k;
@@ -528,9 +543,9 @@
         r.ord.forEach(function (a) { has.ord[a.k] = 1; titles.ord[a.k] = a.t; });
         r.reg.forEach(function (a) { has.reg[a.k] = 1; titles.reg[a.k] = (a.s && regInfo[a.s] ? regInfo[a.s].short + " " : "") + a.t; });
       });
-      var up = document.getElementById("sdUpdated");
-      if (up) up.textContent = d.updated || "";
       render();
+      var hp = document.getElementById("sdHelp");
+      if (hp) hp.innerHTML = hint("？ 使い方", helpHTML(), "help");
     })
     .catch(function (e) {
       app.innerHTML = '<div class="sd-loading">データを読み込めませんでした。</div>';
