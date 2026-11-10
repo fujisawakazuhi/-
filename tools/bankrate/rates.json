@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-10 17:52",
- "updated_iso": "2026-11-10T17:52:25.255803+09:00",
+ "updated": "2026-11-10 20:23",
+ "updated_iso": "2026-11-10T20:23:41.120573+09:00",
  "currencies": [
   "USD",
   "EUR",
@@ -64,7 +64,7 @@
      "ttb": 0.11560000000000001
     }
    },
-   "fetched": "2026-11-10 17:52"
+   "fetched": "2026-11-10 20:23"
   },
   "smbc": {
    "rates": {
@@ -91,7 +91,7 @@
      "ttb": 23.41
     }
    },
-   "fetched": "2026-11-10 17:52"
+   "fetched": "2026-11-10 20:23"
   },
   "wise": {
    "rates": {
@@ -117,8 +117,10 @@
      "mid": 0.006190519132043903
     }
    },
-   "fetched": "2026-11-10 17:52"
+   "fetched": "2026-11-10 20:23"
   }
  },
- "errors": {}
+ "errors": {
+  "mizuho": "https://www.mizuhobank.co.jp/market/index.html: browser parsed 0 rows"
+ }
 }
